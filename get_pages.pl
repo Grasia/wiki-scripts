@@ -4,7 +4,8 @@ use utf8;
 use warnings;
 use strict;
 
-my $ns = 'en.';
+#my $ns = 'en.';
+my $ns = '';
 my $wiki = 'memory-alpha.wikia.com';
 my $api_url = 'http://'.$ns.$wiki.'/api.php';
 my $export_url = 'http://'.$ns.$wiki.'/wiki/Special:Export';

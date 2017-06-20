@@ -12,6 +12,7 @@ my $export_url = 'http://'.$ns.$wiki.'/wiki/Special:Export';
 my $aplimit = 500; # number of page names in one API request; passed to the API; 500 for anon, 1000 for logged in bot
 my $pages_per_xml = 5000; # number of pages in one Special::Export request
 my $current_only = 1;   # 1 = pages_current, 0 = pages_full
+my $output_dir = 'data/'; # output directory where to store the data extracted. Important to end it with a slash (/)
 
 use Time::HiRes qw[time];
 use LWP::UserAgent;
@@ -23,10 +24,14 @@ use HTML::Entities qw[decode_entities];
 
 my $stm = time;
 
+#####  Begin logic: #####
+
+mkdir $output_dir unless -d $output_dir;
+
 my $br = LWP::UserAgent->new;
 $br->conn_cache(LWP::ConnCache->new());
 $br->agent("ma_dump/1.2");
-$br->cookie_jar(HTTP::Cookies->new(file => "cookies.txt", autosave => 1, ignore_discard => 1));
+$br->cookie_jar(HTTP::Cookies->new(file => $output_dir . "cookies.txt", autosave => 1, ignore_discard => 1));
 
 #my @namespaces = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 102, 103, 110, 111); # probably should fetch this list from somewhere
 my @namespaces = (0); # just the main namespace
@@ -74,7 +79,7 @@ while (@pages) {
         $req->content( join('&', map(sprintf("%s=%s", $_, uri_escape_utf8($export_parms{$_}) ), keys %export_parms) ) );
 
         my $xml_file = sprintf "%s_pages_%s_hard_part%03d.xml", $wiki_fn, $export_parms{curonly} ? 'current' : 'full', $part;
-        my $res = $br->request($req, $xml_file);
+        my $res = $br->request($req, $output_dir . $xml_file);
 
         if ($res->is_success) {
                 print "OK. $xml_file ",-s $xml_file," bytes.\n";

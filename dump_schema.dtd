@@ -1,0 +1,101 @@
+<?xml encoding="UTF-8"?>
+
+<!ELEMENT ns1:mediawiki (ns1:siteinfo,ns1:page+)>
+<!ATTLIST ns1:mediawiki
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'
+  xmlns:xsi CDATA #FIXED 'http://www.w3.org/2001/XMLSchema-instance'
+  version CDATA #REQUIRED
+  xsi:schemaLocation CDATA #REQUIRED
+  xml:lang NMTOKEN #REQUIRED>
+
+<!ELEMENT ns1:siteinfo (ns1:sitename,ns1:base,ns1:generator,ns1:case,
+                        ns1:namespaces)>
+<!ATTLIST ns1:siteinfo
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:page (ns1:title,ns1:ns,ns1:id,ns1:redirect?,ns1:sha1,
+                    ns1:revision+)>
+<!ATTLIST ns1:page
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:sitename (#PCDATA)>
+<!ATTLIST ns1:sitename
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:base (#PCDATA)>
+<!ATTLIST ns1:base
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:generator (#PCDATA)>
+<!ATTLIST ns1:generator
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:case (#PCDATA)>
+<!ATTLIST ns1:case
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:namespaces (ns1:namespace)+>
+<!ATTLIST ns1:namespaces
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:title (#PCDATA)>
+<!ATTLIST ns1:title
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:ns (#PCDATA)>
+<!ATTLIST ns1:ns
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:redirect EMPTY>
+<!ATTLIST ns1:redirect
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'
+  title CDATA #REQUIRED>
+
+<!ELEMENT ns1:sha1 (#PCDATA)>
+<!ATTLIST ns1:sha1
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:revision (ns1:id,ns1:timestamp,ns1:contributor,ns1:minor?,
+                        ns1:comment?,ns1:text)>
+<!ATTLIST ns1:revision
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:namespace (#PCDATA)>
+<!ATTLIST ns1:namespace
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'
+  case NMTOKEN #REQUIRED
+  key CDATA #REQUIRED>
+
+<!ELEMENT ns1:timestamp (#PCDATA)>
+<!ATTLIST ns1:timestamp
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:contributor (ns1:ip|(ns1:username,ns1:id))>
+<!ATTLIST ns1:contributor
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:minor EMPTY>
+<!ATTLIST ns1:minor
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:comment (#PCDATA)>
+<!ATTLIST ns1:comment
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:text (#PCDATA)>
+<!ATTLIST ns1:text
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'
+  bytes CDATA #REQUIRED
+  xml:space NMTOKEN #REQUIRED>
+
+<!ELEMENT ns1:ip (#PCDATA)>
+<!ATTLIST ns1:ip
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:username (#PCDATA)>
+<!ATTLIST ns1:username
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>
+
+<!ELEMENT ns1:id (#PCDATA)>
+<!ATTLIST ns1:id
+  xmlns:ns1 CDATA #FIXED 'http://www.mediawiki.org/xml/export-0.6/'>

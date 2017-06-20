@@ -1,0 +1,21 @@
+<!ELEMENT mediawiki (siteinfo,page)>
+
+<!ELEMENT siteinfo (sitename,base,generator,case,namespaces)>
+<!ELEMENT namespaces (namespace+)>
+<!ELEMENT namespace (#PCDATA)>
+
+<!ELEMENT page (title,ns,id,sha1?,revision*)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT ns (#PCDATA)>
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT sha1 (#PCDATA)>
+
+<!ELEMENT revision (id,timestamp,contributor,comment,text)>
+<!ELEMENT id (#PCDATA)>
+<!ELEMENT timestamp (#PCDATA)>
+<!ELEMENT contributor (username,id)>
+<!ELEMENT comment (#PCDATA)>
+<!ELEMENT text (#PCDATA)>
+
+<!ELEMENT username (#PCDATA)>
+<!ELEMENT id (#PCDATA)>

@@ -5,8 +5,8 @@ use warnings;
 use strict;
 
 #my $language = 'en.';
-my $language = 'es.';
-my $wiki = 'lagunanegra.wikia.com';
+my $language = '';
+my $wiki = 'memory-alpha.wikia.com';
 my $api_url = 'http://'.$language.$wiki.'/api.php';
 my $export_url = 'http://'.$language.$wiki.'/wiki/Special:Export';
 my $aplimit = 500; # number of page names in one API request; passed to the API; 500 for anon, 1000 for logged in bot
@@ -21,6 +21,7 @@ use HTTP::Request::Common;
 use HTTP::Cookies;
 use URI::Escape qw[uri_escape_utf8];
 use HTML::Entities qw[decode_entities];
+use JSON;
 
 my $stm = time;
 
@@ -33,9 +34,24 @@ $br->conn_cache(LWP::ConnCache->new());
 $br->agent("ma_dump/1.2");
 $br->cookie_jar(HTTP::Cookies->new(file => $output_dir . "cookies.txt", autosave => 1, ignore_discard => 1));
 
+my $ns_api_url = $api_url . "?action=query&meta=siteinfo&siprop=namespaces&format=json";
+my $res = $br->get($ns_api_url);
+if ($res->is_success) {
+        my $json_res = decode_json($res->decoded_content);
+        #my @hash = $json_res->{'query'}{'namespaces'};
+        ##~ print $json_res->{'query'}{'namespaces'}{'-2'}{'id'};
+        my @available_namespaces = keys $json_res->{'query'}{'namespaces'};
+        print "These are the namespaces available for this wiki: " . join(', ', @available_namespaces) . "\n";
+} else {
+        die $res->status_line." when getting namespaces from $ns_api_url";
+}
+
+die;
+
 #my @namespaces = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 102, 103, 110, 111); # probably should fetch this list from somewhere
 #my @namespaces = (0); # just the main namespace
 my @namespaces = (-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 110, 111, 500, 501, 502, 503, 1200, 1201, 1202, 2000, 2001, 2002); # list extracted from wikia_dashboard namespace analysis. anyways, why this list?
+# more info about namespaces here: http://community.wikia.com/wiki/Help:Namespace
 
 my @pages;
 print "Getting page list...\n";

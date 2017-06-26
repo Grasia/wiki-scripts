@@ -6,7 +6,7 @@ use strict;
 
 #my $language = 'en.';
 my $language = '';
-my $wiki = 'memory-alpha.wikia.com';
+my $wiki = 'marvel.wikia.com';
 my $api_url = 'http://'.$language.$wiki.'/api.php';
 my $export_url = 'http://'.$language.$wiki.'/wiki/Special:Export';
 my $aplimit = 500; # number of page names in one API request; passed to the API; 500 for anon, 1000 for logged in bot
@@ -45,8 +45,6 @@ if ($res->is_success) {
 } else {
         die $res->status_line." when getting namespaces from $ns_api_url";
 }
-
-die;
 
 #my @namespaces = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 102, 103, 110, 111); # probably should fetch this list from somewhere
 #my @namespaces = (0); # just the main namespace

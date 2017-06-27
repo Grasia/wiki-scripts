@@ -4,11 +4,22 @@ use utf8;
 use warnings;
 use strict;
 
+my $wiki;
+# Define wiki to download
+if (@ARGV < 1) {
+        print "Please, write the wiki domain (FQDN) you want to get the dump from (eg. es.lagunanegra.wikia.com)\n";
+        $wiki = <STDIN>;
+        chomp($wiki);
+} else {
+        $wiki = $ARGV[0];
+}
+
+
 #my $language = 'en.';
-my $language = '';
-my $wiki = 'marvel.wikia.com';
-my $api_url = 'http://'.$language.$wiki.'/api.php';
-my $export_url = 'http://'.$language.$wiki.'/wiki/Special:Export';
+#my $language = '';
+#my $wiki = 'marvel.wikia.com';
+my $api_url = 'http://'.$wiki.'/api.php';
+my $export_url = 'http://'.$wiki.'/wiki/Special:Export';
 my $aplimit = 500; # number of page names in one API request; passed to the API; 500 for anon, 1000 for logged in bot
 my $pages_per_xml = 5000; # number of pages in one Special::Export request
 my $current_only = 0;   # 1 = pages_current, 0 = pages_full

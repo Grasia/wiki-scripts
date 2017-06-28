@@ -40,11 +40,13 @@ my $stm = time;
 
 mkdir $output_dir unless -d $output_dir;
 
+# saving cookies file
 my $br = LWP::UserAgent->new;
 $br->conn_cache(LWP::ConnCache->new());
 $br->agent("ma_dump/1.2");
 $br->cookie_jar(HTTP::Cookies->new(file => $output_dir . "cookies.txt", autosave => 1, ignore_discard => 1));
 
+# Getting namespaces listing for this wiki
 my $ns_api_url = $api_url . "?action=query&meta=siteinfo&siprop=namespaces&format=json";
 my $res = $br->get($ns_api_url);
 if ($res->is_success) {
@@ -62,6 +64,7 @@ if ($res->is_success) {
 my @namespaces = (-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 110, 111, 500, 501, 502, 503, 1200, 1201, 1202, 2000, 2001, 2002); # list extracted from wikia_dashboard namespace analysis. anyways, why this list?
 # more info about namespaces here: http://community.wikia.com/wiki/Help:Namespace
 
+# getting pages listing
 my @pages;
 print "Getting page list...\n";
 foreach my $ns (@namespaces) {
@@ -94,6 +97,7 @@ delete $export_parms{curonly} unless $current_only;
 my $wiki_fn = $wiki;
 $wiki_fn =~ s~[^\w\.\-]~_~g;
 
+# getting pages in chunks
 my $part = 0;
 while (@pages) {
         $part++;

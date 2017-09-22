@@ -7,10 +7,15 @@ use strict;
 
 use LWP::UserAgent;
 use JSON;
+use LWP::ConnCache;
 use Data::Dumper;
+use HTTP::Cookies;
 
 my $br = LWP::UserAgent->new;
 $br->timeout(10);
+$br->conn_cache(LWP::ConnCache->new());
+$br->cookie_jar(HTTP::Cookies->new("cookies.txt", autosave => 1, ignore_discard => 1));
+$br->agent("Mozilla/5.0");
 
 
 # wikia API
@@ -58,14 +63,14 @@ sub extract_wiki_info_from_wikia_json {
         $wiki_pages = $wiki_stats->{'pages'};
 
         $wiki_admins = $wiki_stats->{'admins'};
-        say $wiki_stats->{'users'};
-        say $wiki_stats->{'activeUsers'};
-        say $wiki_admins;
+        #say $wiki_stats->{'users'};
+        #say $wiki_stats->{'activeUsers'};
+        #say $wiki_admins;
 }
 
-sub print_wiki_to_csv {
-        print CSV "$wikia_id, $wiki_name, $wiki_url\n";
-}
+#sub print_wiki_to_csv {
+        #print CSV "$wikia_id, $wiki_name, $wiki_url\n";
+#}
 
 
 # Getting wiki info from wikia general API
@@ -75,9 +80,32 @@ if (not $res->is_success) {
 }
 
 my $json_res = decode_json($res->decoded_content);
-print Dumper($json_res);
+#print Dumper($json_res);
 $wiki_info = $json_res->{'items'}->{$wikia_id};
 extract_wiki_info_from_wikia_json();
+
+# Getting users using Special:ListUsers page
+my $listUsers_url = $wiki_url . '/index.php?' . 'action=ajax&rs=ListusersAjax::axShowUsers';
+my @form_data = [
+        groups => "all,bureaucrat,sysop,authenticated,content-reviewer,council,fandom-editor,global-discussions-moderator,helper,restricted-login,restricted-login-exempt,reviewer,staff,util,vanguard,voldev,vstf,",
+        username => "",
+        edits => "20",
+        limit => "10",
+        offset => "0",
+        loop => "2",
+        numOrder => "1",
+        order => "username:asc"
+];
+
+$res = $br->post($listUsers_url, @form_data);
+if (not $res->is_success) {
+        die $res->status_line.' when posting to Special:ListUsers ';
+}
+my $raw_users_content = $res->decoded_content();
+$json_res = decode_json($raw_users_content);
+print Dumper($json_res);
+my $active_users_var = $json_res->{'iTotalDisplayRecords'};
+say $active_users_var;
 
 # Getting wiki info from wikimedia API
 #$api_request = $wiki_url . $mediawiki_endpoint . $mediawiki_params;

@@ -9,18 +9,16 @@ use LWP::UserAgent;
 use JSON;
 use LWP::ConnCache;
 use Data::Dumper;
-use HTTP::Cookies;
 
 my $br = LWP::UserAgent->new;
 $br->timeout(10);
 $br->conn_cache(LWP::ConnCache->new());
-$br->cookie_jar(HTTP::Cookies->new("cookies.txt", autosave => 1, ignore_discard => 1));
 $br->agent("Mozilla/5.0");
 
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
-my $wikia_id = '55';
+my $wikia_id = '444';
 my $wikia_params = '/Wikis/Details?ids=' . $wikia_id; # params targetting wikia api to get wiki info
 
 # mediawiki API
@@ -41,6 +39,7 @@ my $wiki_lang;
 my $wiki_users;
 my $wiki_admins;
 my $wiki_active_users;
+my %users_by_contributions;
 
 # csv variables
 my $output_file = 'wikia_census.csv';
@@ -63,6 +62,7 @@ sub extract_wiki_info_from_wikia_json {
         $wiki_pages = $wiki_stats->{'pages'};
 
         $wiki_admins = $wiki_stats->{'admins'};
+        $wiki_active_users = $wiki_stats->{'activeUsers'};
         #say $wiki_stats->{'users'};
         #say $wiki_stats->{'activeUsers'};
         #say $wiki_admins;
@@ -80,19 +80,21 @@ if (not $res->is_success) {
 }
 
 my $json_res = decode_json($res->decoded_content);
-#print Dumper($json_res);
+print Dumper($json_res);
 $wiki_info = $json_res->{'items'}->{$wikia_id};
 extract_wiki_info_from_wikia_json();
 
 # Getting users using Special:ListUsers page
 my $listUsers_url = $wiki_url . '/index.php?' . 'action=ajax&rs=ListusersAjax::axShowUsers';
+my $loop = 1;
+my $edits = 1;
 my @form_data = [
-        groups => "all,bureaucrat,sysop,authenticated,content-reviewer,council,fandom-editor,global-discussions-moderator,helper,restricted-login,restricted-login-exempt,reviewer,staff,util,vanguard,voldev,vstf,",
+        groups => "all,bot,bureaucrat,rollback,sysop,threadmoderator,authenticated,bot-global,content-reviewer,council,fandom-editor,global-discussions-moderator,helper,restricted-login,restricted-login-exempt,reviewer,staff,util,vanguard,voldev,vstf,",
         username => "",
-        edits => "20",
+        edits => $edits,
         limit => "10",
         offset => "0",
-        loop => "2",
+        loop => $loop,
         numOrder => "1",
         order => "username:asc"
 ];
@@ -103,9 +105,33 @@ if (not $res->is_success) {
 }
 my $raw_users_content = $res->decoded_content();
 $json_res = decode_json($raw_users_content);
-print Dumper($json_res);
-my $active_users_var = $json_res->{'iTotalDisplayRecords'};
-say $active_users_var;
+#~ print Dumper($json_res);
+my $users = $json_res->{'iTotalDisplayRecords'};
+say "Total users: " . $users;
+
+my @form_data_for_bots = [
+        groups => "bot,bot-global,",
+        username => "",
+        edits => $edits,
+        limit => "10",
+        offset => "0",
+        loop => $loop,
+        numOrder => "1",
+        order => "username:asc"
+];
+
+$res = $br->post($listUsers_url, @form_data_for_bots);
+if (not $res->is_success) {
+        die $res->status_line.' when posting to Special:ListUsers querying for bot users.';
+}
+
+$raw_users_content = $res->decoded_content();
+$json_res = decode_json($raw_users_content);
+#~ print Dumper($json_res);
+my $bot_users = $json_res->{'iTotalDisplayRecords'};
+say "Bot users: " . $bot_users;
+
+say "Non-bot users: " . ($users - $bot_users);
 
 # Getting wiki info from wikimedia API
 #$api_request = $wiki_url . $mediawiki_endpoint . $mediawiki_params;

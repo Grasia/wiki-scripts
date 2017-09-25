@@ -11,13 +11,13 @@ use LWP::ConnCache;
 use Data::Dumper;
 
 my $br = LWP::UserAgent->new;
-$br->timeout(10);
+$br->timeout(15);
 $br->conn_cache(LWP::ConnCache->new());
 $br->agent("Mozilla/5.0");
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_MAX = 300;
+my $WIKIA_ID_MAX = 10000;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -195,7 +195,7 @@ for ($wikia_id = 1; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         say('#' x 20);
         print "\n\n";
         
-        sleep 1;
+        sleep 2;
 }
 
 

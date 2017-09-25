@@ -16,10 +16,11 @@ $br->conn_cache(LWP::ConnCache->new());
 $br->agent("Mozilla/5.0");
 
 
+# Define id max to iterate until.
+my $WIKIA_ID_MAX = 300;
+
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
-my $wikia_id = '55';
-my $wikia_params = '/Wikis/Details?ids=' . $wikia_id; # params targetting wikia api to get wiki info
 
 # mediawiki API
 my $mediawiki_endpoint = 'api.php';
@@ -50,9 +51,10 @@ my $output_file = 'wikia_census.csv';
 my $csv_columns = 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 
 # other variables
+my $wikia_id;
 my $wiki_info;
-my $api_request = $wikia_endpoint . $wikia_params;
 
+# one argument => wiki_info that is a dictionary with all info retrieved from wikia API
 sub extract_wiki_info_from_wikia_json {
         $wiki_name = $wiki_info->{'name'};
         $wiki_url = $wiki_info->{'url'};
@@ -144,35 +146,61 @@ sub extract_users_by_contributions {
 
 # To fill $csv_columns => 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 sub print_wiki_to_csv {
+        say "Printing info for wiki $wikia_id .....";
         print CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
 }
 
 
-# Getting wiki info from wikia general API
-my $res = $br->get($api_request);
-if (not $res->is_success) {
-        die $res->status_line.' when getting wikias from ' . $api_request;
-}
-
-my $json_res = decode_json($res->decoded_content);
-#~ print Dumper($json_res);
-$wiki_info = $json_res->{'items'}->{$wikia_id};
-extract_wiki_info_from_wikia_json();
-
-# Getting users using Special:ListUsers page
-$listUsers_url = $wiki_url . $listUsers_post_endpoint;
-extract_users_by_contributions();
-
-say ("Non bot users per contribution: ");
-say @users_by_contributions;
-print "$_, " foreach (@users_by_contributions);
+#### Starts main(): #####
 
 # creating CSV file handler for writing
 open CSV, " >$output_file" or die "Error trying to write on $output_file: $!\n";
 print CSV $csv_columns . "\n";
-print_wiki_to_csv();
 
 
+# Iterating over ids
+for ($wikia_id = 1; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
+        
+        say ("Retrieving data for wiki with id: $wikia_id");
+        
+        # Getting wiki's canonical url from wikia general API
+        my $wikia_params = '/Wikis/Details?ids=' . $wikia_id; # params targetting wikia api to get wiki info
+        my $api_request = $wikia_endpoint . $wikia_params;
+        my $res = $br->get($api_request);
+        if (not $res->is_success) {
+                die $res->status_line.' when getting wikias from ' . $api_request;
+        }
+        my $json_res = decode_json($res->decoded_content);
+        #~ print Dumper($json_res);
+        if ( not($json_res->{'items'}->{$wikia_id} )) {
+                say "--- No wiki found with id $wikia_id ---";
+                next;
+        }
+        
+        # Getting general info using wikia API:
+        $wiki_info = $json_res->{'items'}->{$wikia_id};
+        extract_wiki_info_from_wikia_json();
+        
+        # Getting users using Special:ListUsers page
+        $listUsers_url = $wiki_url . $listUsers_post_endpoint;
+        extract_users_by_contributions();
+        
+        
+        # Info retrieved, printing:
+        print_wiki_to_csv();
+        
+        say ("Non bot users per contribution: ");
+        print "$_, " foreach (@users_by_contributions);
+        print "\n\n";        
+        say('#' x 20);
+        print "\n\n";
+        
+        sleep 1;
+}
+
+
+
+###############################################
 
 #### Additional info / resources: #####
 # Other possible queries targetting wikia api with useful info:

@@ -14,10 +14,11 @@ my $br = LWP::UserAgent->new;
 $br->timeout(15);
 $br->conn_cache(LWP::ConnCache->new());
 $br->agent("Mozilla/5.0");
+$br->requests_redirectable(['POST',]); # Only automatically redirects for POST requests
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_MAX = 10000;
+my $WIKIA_ID_MAX = 550;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -89,6 +90,7 @@ sub request_all_users {
         if (not $res->is_success) {
                 die $res->status_line.' when posting to Special:ListUsers for edits ' . $edits;
         }
+        
         my $raw_users_content = $res->decoded_content();
         my $json_res = decode_json($raw_users_content);
         #~ print Dumper($json_res);
@@ -150,18 +152,55 @@ sub print_wiki_to_csv {
         print CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
 }
 
+sub is_wiki_url_ok {
+        my $res = $br->get($wiki_url);
+        
+        
+        my @redirects = $res->redirects();
+        foreach my $r (@redirects) {
+                my $req = $r->request();
+                print($req->as_string());
+                print($r->as_string());
+        }
+        
+        
+        if ($res->is_success) {
+                return 1;
+        } elsif ($res->is_redirect) {
+                my $wiki_url_new = $res->header('Location');
+                say "Changing wiki url from $wiki_url to $wiki_url_new by an HTTP redirect";
+                if ($wiki_url_new =~ m/community\.wikia\.com\/wiki\/Special\:CloseWiki/) {
+                        return 0; # return "wiki is deleted"
+                } else {
+                        say "Executing again is_wiki_url_ok following redirect to $wiki_url_new";
+                        $wiki_url = $wiki_url_new;
+                        return is_wiki_url_ok();
+                }
+        } else {
+                die "Unexpected error, checking wiki url $wiki_url for wiki with id $wikia_id: " . $res->status_line;
+        }
+        
+        return 1;
+}
+
 
 #### Starts main(): #####
 
 # creating CSV file handler for writing
-open CSV, " >$output_file" or die "Error trying to write on $output_file: $!\n";
-print CSV $csv_columns . "\n";
+open CSV, " >>$output_file" or die "Error trying to write on $output_file: $!\n";
+print CSV "$csv_columns\n";
 
 
 # Iterating over ids
 for ($wikia_id = 1; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         
+        print "\n\n";        
+        say('#' x 30);
+        print "\n\n";
+        
         say ("Retrieving data for wiki with id: $wikia_id");
+        
+        sleep 1; # Artificial delay to not saturate wikia' servers
         
         # Getting wiki's canonical url from wikia general API
         my $wikia_params = '/Wikis/Details?ids=' . $wikia_id; # params targetting wikia api to get wiki info
@@ -173,13 +212,19 @@ for ($wikia_id = 1; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         my $json_res = decode_json($res->decoded_content);
         #~ print Dumper($json_res);
         if ( not($json_res->{'items'}->{$wikia_id} )) {
-                say "--- No wiki found with id $wikia_id ---";
+                print "\n--- No wiki found with id $wikia_id ---\n";
                 next;
         }
-        
+
         # Getting general info using wikia API:
         $wiki_info = $json_res->{'items'}->{$wikia_id};
         extract_wiki_info_from_wikia_json();
+        
+        my $deleted = not is_wiki_url_ok();
+        if ($deleted) {
+                print "\n--- Wiki with id $wikia_id has been deleted from wikia ---\n";
+                next;
+        }
         
         # Getting users using Special:ListUsers page
         $listUsers_url = $wiki_url . $listUsers_post_endpoint;
@@ -191,13 +236,9 @@ for ($wikia_id = 1; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         
         say ("Non bot users per contribution: ");
         print "$_, " foreach (@users_by_contributions);
-        print "\n\n";        
-        say('#' x 20);
-        print "\n\n";
-        
-        sleep 2;
 }
 
+close(CSV);
 
 
 ###############################################

@@ -132,11 +132,11 @@ sub extract_users_by_contributions {
         my $loop_query;
         for (my $i = 0; $i < 6; ++$i) {
                 if ($i == 0) {$edits_query = 1;}
-                elsif ($i == 1) {$edits_query = 5;}
+                elsif ($i == 1) {$edits_query = 5; sleep 1;}
                 elsif ($i == 2) {$edits_query = 10;}
-                elsif ($i == 3) {$edits_query = 20;}
+                elsif ($i == 3) {$edits_query = 20; sleep 1;}
                 elsif ($i == 4) {$edits_query = 50;}
-                else {$edits_query = 100;} # ($i == 5)
+                else {$edits_query = 100; sleep 1;} # ($i == 5)
                 
                 $loop_query = $i * 2 + 1;
                 $no_bot_users = request_all_users($loop_query, $edits_query) - request_bot_users($loop_query + 1, $edits_query);

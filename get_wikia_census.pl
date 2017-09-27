@@ -155,7 +155,7 @@ sub print_wiki_to_csv {
 }
 
 sub is_wiki_url_ok {
-        my $res = $br->get($wiki_url);
+        my $res = $br->get($wiki_url . $listUsers_post_endpoint);
         
         # To inspect past redirects if automatic redirect was enabled:
         #my @redirects = $res->redirects();

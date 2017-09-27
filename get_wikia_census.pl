@@ -9,6 +9,7 @@ use LWP::UserAgent;
 use JSON;
 use LWP::ConnCache;
 use Data::Dumper;
+use HTTP::Status qw(:constants :is status_message);
 
 my $br = LWP::UserAgent->new;
 $br->timeout(15);
@@ -18,8 +19,8 @@ $br->requests_redirectable(['POST',]); # Only automatically redirects for POST r
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_MAX = 550;
 my $WIKIA_ID_INIT = 1;
+my $WIKIA_ID_MAX = 550;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -192,6 +193,7 @@ print CSV "$csv_columns\n";
 
 
 # Iterating over ids
+my $retried = 0; # var to mark if I already retried a 500 responded request.
 for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         
         print "\n\n";        
@@ -206,8 +208,17 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         my $wikia_params = '/Wikis/Details?ids=' . $wikia_id; # params targetting wikia api to get wiki info
         my $api_request = $wikia_endpoint . $wikia_params;
         my $res = $br->get($api_request);
+        
         if (not $res->is_success) {
-                die $res->status_line.' when getting wikias from ' . $api_request;
+                # In case of a 500 response, wait for a moment and retry again.
+                if ($res->code == HTTP_INTERNAL_SERVER_ERROR && $retried < 3) {
+                        say "Received 500 Internal Server Error response. Retrying again after 10 seconds";
+                        sleep 10;
+                        $retried++;
+                        redo;
+                } else {
+                        die $res->status_line . ' when getting wikias from ' . $api_request;
+                }
         }
         my $json_res = decode_json($res->decoded_content);
         #~ print Dumper($json_res);
@@ -237,6 +248,8 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         say ("Non bot users per contribution: ");
         print "$_, " foreach (@users_by_contributions);
         print "\n";
+        
+        $retried = 0; # clean up retried
 }
 
 close(CSV);

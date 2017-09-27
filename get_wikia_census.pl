@@ -19,6 +19,7 @@ $br->requests_redirectable(['POST',]); # Only automatically redirects for POST r
 
 # Define id max to iterate until.
 my $WIKIA_ID_MAX = 550;
+my $WIKIA_ID_INIT = 1;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -191,7 +192,7 @@ print CSV "$csv_columns\n";
 
 
 # Iterating over ids
-for ($wikia_id = 1; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
+for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         
         print "\n\n";        
         say('#' x 30);

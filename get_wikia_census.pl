@@ -155,14 +155,13 @@ sub print_wiki_to_csv {
 sub is_wiki_url_ok {
         my $res = $br->get($wiki_url);
         
-        
-        my @redirects = $res->redirects();
-        foreach my $r (@redirects) {
-                my $req = $r->request();
-                print($req->as_string());
-                print($r->as_string());
-        }
-        
+        # To inspect past redirects if automatic redirect was enabled:
+        #my @redirects = $res->redirects();
+        #foreach my $r (@redirects) {
+                #my $req = $r->request();
+                #print($req->as_string());
+                #print($r->as_string());
+        #}
         
         if ($res->is_success) {
                 return 1;
@@ -236,6 +235,7 @@ for ($wikia_id = 1; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         
         say ("Non bot users per contribution: ");
         print "$_, " foreach (@users_by_contributions);
+        print "\n";
 }
 
 close(CSV);

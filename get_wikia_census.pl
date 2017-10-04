@@ -48,10 +48,11 @@ my $wiki_lang;
 my $wiki_users;
 my $wiki_admins;
 my $wiki_active_users;
-my @users_by_contributions;
+my @users_by_contributions = ('', '', '', '', '', '');
 
 # csv variables
-my $output_file = 'wikia_census.csv';
+my $census_filename = 'wikia_census.csv';
+my $deleted_wikis_filename = 'deleted_wikia_census.csv';
 my $csv_columns = 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 
 # other variables
@@ -153,9 +154,16 @@ sub extract_users_by_contributions {
 
 # To fill $csv_columns => 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 sub print_wiki_to_csv {
+    my ($deleted) = @_;
     say "Printing info for wiki $wikia_id .....";
     utf8::encode($wiki_name);
-    print CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
+
+    if (defined $deleted) {
+        print DELETED_CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
+
+    } else {
+        print CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
+    }
 }
 
 # returns: 1 if url is ok, -1 if the wiki's been deleted or 0 in case of an http error.
@@ -197,9 +205,12 @@ sub is_wiki_url_ok {
 
 #### Starts main(): #####
 
-# creating CSV file handler for writing
-open CSV, " >>$output_file" or die "Error trying to write on $output_file: $!\n";
+# creating CSV files handler for writing
+open CSV, " >>$census_filename" or die "Error trying to write on $census_filename: $!\n";
 print CSV "$csv_columns\n";
+
+open DELETED_CSV, " >>$deleted_wikis_filename" or die "Error trying to write on $deleted_wikis_filename: $!\n";
+print DELETED_CSV "$csv_columns\n";
 
 
 # Iterating over ids
@@ -243,7 +254,9 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
 
     my $wiki_url_status = is_wiki_url_ok();
     if ($wiki_url_status == -1 ) {
-        #TODO: print "Storing it in deleted_wikis.csv \n"
+        $_ = '' foreach (@users_by_contributions); # assign empty string to users since we are unable to get them through Special:ListUsers
+        my $deleted_flag = 1;
+        print_wiki_to_csv($deleted_flag);
         next;
     } elsif ($wiki_url_status == 0) {
         # http error found. Skipping from census.

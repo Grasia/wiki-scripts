@@ -19,8 +19,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 1161;
-my $WIKIA_ID_MAX = 1161;
+my $WIKIA_ID_INIT = 1;
+my $WIKIA_ID_MAX = 1500;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';

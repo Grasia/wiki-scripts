@@ -1,0 +1,7 @@
+# census
+
+Generate a 'census' or corpus of wikia hosted wikis, based on number of users, editions, pages, etcetera.
+
+## Dependencies
+* perl 5
+* Bundle::LWP. In debian and derivatives it's included in the `libwww-perl` package. Alternatively, It can be installed using CPAN: `perl -MCPAN -e 'install Bundle::LWP'`

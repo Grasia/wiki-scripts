@@ -154,6 +154,7 @@ sub extract_users_by_contributions {
 # To fill $csv_columns => 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 sub print_wiki_to_csv {
     say "Printing info for wiki $wikia_id .....";
+    utf8::encode($wiki_name);
     print CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
 }
 

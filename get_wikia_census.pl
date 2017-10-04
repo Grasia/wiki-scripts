@@ -232,13 +232,18 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
 
     if (not $res->is_success) {
         # In case of a 500 response, wait for a moment and retry again.
-        if ($res->code == HTTP_INTERNAL_SERVER_ERROR && $retried < 3) {
-            say STDERR "Received 500 Internal Server Error response. Retrying again after 10 seconds...";
-            sleep 10;
-            $retried++;
-            redo;
+        if ($res->code == HTTP_INTERNAL_SERVER_ERROR) {
+            if ($retried < 3) {
+                say STDERR "Received 500 Internal Server Error response. Retrying again after 10 seconds...";
+                sleep 10;
+                $retried++;
+                redo;
+            } else {
+                die 'Too many intents: ' . $res->status_line . ' when getting wikias from ' . $api_request;
+            }
         } else {
-            die 'Too many intents: ' . $res->status_line . ' when getting wikias from ' . $api_request;
+            say STDERR "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;
+            die "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;
         }
     }
     my $json_res = decode_json($res->decoded_content);

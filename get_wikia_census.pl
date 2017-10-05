@@ -209,13 +209,15 @@ sub is_wiki_url_ok {
 #### Starts main(): #####
 
 # creating CSV files handler for writing
+my $print_columns = not -e $census_filename;
 open CSV, " >>$census_filename" or die "Error trying to write on $census_filename: $!\n";
 autoflush CSV 1;
-print CSV "$csv_columns\n";
+print CSV "$csv_columns\n" if $print_columns;
 
+$print_columns = not -e $deleted_wikis_filename;
 open DELETED_CSV, " >>$deleted_wikis_filename" or die "Error trying to write on $deleted_wikis_filename: $!\n";
 autoflush DELETED_CSV 1;
-print DELETED_CSV "$csv_columns\n";
+print DELETED_CSV "$csv_columns\n" if $print_columns;
 
 
 # Iterating over ids
@@ -289,6 +291,7 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
 }
 
 close(CSV);
+close(DELETED_CSV);
 
 
 ###############################################

@@ -91,6 +91,7 @@ sub request_all_users {
     ];
 
     my $res = $br->post($listUsers_url, @form_data);
+    $res->content_type('application/x-www-form-urlencoded');
     if (not $res->is_success) {
         die $res->status_line.' when posting to Special:ListUsers for edits ' . $edits;
     }
@@ -112,12 +113,13 @@ sub request_bot_users {
         edits => $edits,
         limit => "10",
         offset => "0",
-        loop => $loop, # simulate user behaviour
+        loop => $loop + 1, # simulate user behaviour
         numOrder => "1",
         order => "username:asc"
     ];
 
     my $res = $br->post($listUsers_url, @form_data_for_bots);
+    $res->content_type('application/x-www-form-urlencoded');
     if (not $res->is_success) {
             die $res->status_line.' when posting to Special:ListUsers querying for bot users.';
     }

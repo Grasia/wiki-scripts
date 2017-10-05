@@ -14,14 +14,14 @@ use HTTP::Status qw(:constants :is status_message);
 
 my $br = LWP::UserAgent->new;
 $br->timeout(15);
-$br->conn_cache(LWP::ConnCache->new());
+#$br->conn_cache(LWP::ConnCache->new());
 $br->agent("Mozilla/5.0");
 $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 1;
-my $WIKIA_ID_MAX = 20;
+my $WIKIA_ID_INIT = 311;
+my $WIKIA_ID_MAX = 2000;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';

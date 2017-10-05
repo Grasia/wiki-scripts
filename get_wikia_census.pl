@@ -11,6 +11,7 @@ use JSON;
 use LWP::ConnCache;
 use Data::Dumper;
 use HTTP::Status qw(:constants :is status_message);
+use IO::Handle;
 
 my $br = LWP::UserAgent->new;
 $br->timeout(15);
@@ -20,8 +21,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 311;
-my $WIKIA_ID_MAX = 2000;
+my $WIKIA_ID_INIT = 1;
+my $WIKIA_ID_MAX = 1000;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -209,9 +210,11 @@ sub is_wiki_url_ok {
 
 # creating CSV files handler for writing
 open CSV, " >>$census_filename" or die "Error trying to write on $census_filename: $!\n";
+autoflush CSV 1;
 print CSV "$csv_columns\n";
 
 open DELETED_CSV, " >>$deleted_wikis_filename" or die "Error trying to write on $deleted_wikis_filename: $!\n";
+autoflush DELETED_CSV 1;
 print DELETED_CSV "$csv_columns\n";
 
 

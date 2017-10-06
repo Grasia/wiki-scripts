@@ -23,7 +23,7 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 2735;
+my $WIKIA_ID_INIT = 2733;
 my $WIKIA_ID_MAX = 2735;
 
 # wikia API
@@ -93,12 +93,7 @@ sub request_all_users {
         order => "username:asc"
     ];
 
-    my @post_header = [
-        content_type => 'application/x-www-form-urlencoded',
-        accept => 'application/json'
-    ];
-
-    my $res = $br->post($listUsers_url, @post_header, @form_data);
+    my $res = $br->post($listUsers_url, @form_data);
     if (not $res->is_success) {
         die $res->status_line.' when posting to Special:ListUsers for edits ' . $edits;
     }
@@ -126,12 +121,8 @@ sub request_bot_users {
         order => "username:asc"
     ];
 
-     my @post_header = [
-        content_type => 'application/x-www-form-urlencoded',
-        accept => 'application/json'
-    ];
 
-    my $res = $br->post($listUsers_url, @post_header, @form_data_for_bots);
+    my $res = $br->post($listUsers_url, @form_data_for_bots);
     if (not $res->is_success) {
         die $res->status_line.' when posting to Special:ListUsers querying for bot users.';
     }

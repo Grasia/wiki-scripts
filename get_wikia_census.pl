@@ -23,8 +23,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 2733;
-my $WIKIA_ID_MAX = 2733;
+my $WIKIA_ID_INIT = 2735;
+my $WIKIA_ID_MAX = 2735;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -93,13 +93,18 @@ sub request_all_users {
         order => "username:asc"
     ];
 
-    my $res = $br->post($listUsers_url, @form_data);
-    $res->content_type('application/x-www-form-urlencoded');
+    my @post_header = [
+        content_type => 'application/x-www-form-urlencoded',
+        accept => 'application/json'
+    ];
+
+    my $res = $br->post($listUsers_url, @post_header, @form_data);
     if (not $res->is_success) {
         die $res->status_line.' when posting to Special:ListUsers for edits ' . $edits;
     }
 
     my $raw_users_content = $res->decoded_content();
+    #~ say $res->decoded_content();
     my $json_res = decode_json($raw_users_content);
     #~ print Dumper($json_res);
     my $users = $json_res->{'iTotalDisplayRecords'};
@@ -121,10 +126,14 @@ sub request_bot_users {
         order => "username:asc"
     ];
 
-    my $res = $br->post($listUsers_url, @form_data_for_bots);
-    $res->content_type('application/x-www-form-urlencoded');
+     my @post_header = [
+        content_type => 'application/x-www-form-urlencoded',
+        accept => 'application/json'
+    ];
+
+    my $res = $br->post($listUsers_url, @post_header, @form_data_for_bots);
     if (not $res->is_success) {
-            die $res->status_line.' when posting to Special:ListUsers querying for bot users.';
+        die $res->status_line.' when posting to Special:ListUsers querying for bot users.';
     }
 
     my $raw_users_content = $res->decoded_content();
@@ -170,7 +179,10 @@ sub print_wiki_to_csv {
     }
 }
 
-# returns: 1 if url is ok, -1 if the wiki's been deleted or 0 in case of an http error.
+# returns:   1 if url is ok,
+#           -1 if the wiki's been deleted ,
+#           -2 in case that Wikia says that it is an invalid wiki url
+#           -3 in case of an http error,
 sub is_wiki_url_ok {
     my $res = $br->head($wiki_url);
 
@@ -178,8 +190,12 @@ sub is_wiki_url_ok {
     foreach my $redirect (@redirects) {
 
         if (($redirect->as_string()) =~ m/community\.wikia\.com\/wiki\/Special\:CloseWiki/) {
-            print "\n--- Wiki $wiki_name with id $wikia_id has been deleted from wikia ---\n";
+            print STDERR "\n--- Wiki $wiki_name with id $wikia_id has been deleted from wikia ---\n";
             return -1; # return "wiki has been deleted"
+        }
+        elsif (($redirect->as_string()) =~ m/community\.wikia\.com\/wiki\/Community_Central:Not_a_valid_community/) {
+            print STDERR "\n--- Wiki $wiki_name with id $wikia_id does not exist or has been moved from wikia ---\n";
+            return -2; # return "wiki url is not valid anymore"
         }
     }
 
@@ -202,7 +218,7 @@ sub is_wiki_url_ok {
         #~ }
     } else {
         say STDERR "Error found checking wiki $wiki_name with url $wiki_url for wiki with id $wikia_id: " . $res->status_line;
-        return 0; # return "There's an error requesting $wiki_url"
+        return -3; # return "There's an error requesting $wiki_url"
     }
 }
 
@@ -256,6 +272,10 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
             die "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;
         }
     }
+    #~ say $res->headers()->as_string;
+    #~ say $res->header('content-type');
+
+    #~ say $res->decoded_content;
     my $json_res = decode_json($res->decoded_content);
     #~ print Dumper($json_res);
     if ( not($json_res->{'items'}->{$wikia_id} )) {
@@ -268,14 +288,18 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
     extract_wiki_info_from_wikia_json();
 
     my $wiki_url_status = is_wiki_url_ok();
-    if ($wiki_url_status == -1 ) {
-        $_ = '' foreach (@users_by_contributions); # assign empty string to users since we are unable to get them through Special:ListUsers
-        my $deleted_flag = 1;
-        print_wiki_to_csv($deleted_flag);
-        next;
-    } elsif ($wiki_url_status == 0) {
-        # http error found. Skipping from census.
-        next;
+    if ($wiki_url_status < 0) {
+        if ($wiki_url_status == -1 ) { # deleted wiki. We keep track of it.
+            $_ = '' foreach (@users_by_contributions); # assign empty string to users since we are unable to get them through Special:ListUsers
+            my $deleted_flag = 1;
+            print_wiki_to_csv($deleted_flag);
+            next;
+
+        } else {
+            # invalid url found. Skipping from census.
+            print STDERR "--> Skipping from census <-- \n";
+            next;
+        }
     }
 
     # Getting users using Special:ListUsers page

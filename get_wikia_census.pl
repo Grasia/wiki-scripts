@@ -6,6 +6,8 @@ use warnings;
 use diagnostics;
 use strict;
 
+binmode STDOUT, ':utf8';
+
 use LWP::UserAgent;
 use JSON;
 use LWP::ConnCache;
@@ -21,8 +23,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 1;
-my $WIKIA_ID_MAX = 1000;
+my $WIKIA_ID_INIT = 2733;
+my $WIKIA_ID_MAX = 2733;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -159,7 +161,6 @@ sub extract_users_by_contributions {
 sub print_wiki_to_csv {
     my ($deleted) = @_;
     say "Printing info for wiki $wikia_id .....";
-    utf8::encode($wiki_name);
 
     if (defined $deleted) {
         print DELETED_CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
@@ -212,11 +213,13 @@ sub is_wiki_url_ok {
 my $print_columns = not -e $census_filename;
 open CSV, " >>$census_filename" or die "Error trying to write on $census_filename: $!\n";
 autoflush CSV 1;
+binmode CSV, ':utf8';
 print CSV "$csv_columns\n" if $print_columns;
 
 $print_columns = not -e $deleted_wikis_filename;
 open DELETED_CSV, " >>$deleted_wikis_filename" or die "Error trying to write on $deleted_wikis_filename: $!\n";
 autoflush DELETED_CSV 1;
+binmode DELETED_CSV, ':utf8';
 print DELETED_CSV "$csv_columns\n" if $print_columns;
 
 

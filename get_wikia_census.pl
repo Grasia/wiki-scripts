@@ -6,7 +6,7 @@ use warnings;
 use diagnostics;
 use strict;
 
-binmode STDOUT, ':utf8';
+use open ':encoding(UTF-8)';
 
 use LWP::UserAgent;
 use JSON;
@@ -220,13 +220,11 @@ sub is_wiki_url_ok {
 my $print_columns = not -e $census_filename;
 open CSV, " >>$census_filename" or die "Error trying to write on $census_filename: $!\n";
 autoflush CSV 1;
-binmode CSV, ':utf8';
 print CSV "$csv_columns\n" if $print_columns;
 
 $print_columns = not -e $deleted_wikis_filename;
 open DELETED_CSV, " >>$deleted_wikis_filename" or die "Error trying to write on $deleted_wikis_filename: $!\n";
 autoflush DELETED_CSV 1;
-binmode DELETED_CSV, ':utf8';
 print DELETED_CSV "$csv_columns\n" if $print_columns;
 
 

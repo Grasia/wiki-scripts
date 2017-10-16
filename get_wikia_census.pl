@@ -23,8 +23,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 2733;
-my $WIKIA_ID_MAX = 2735;
+my $WIKIA_ID_INIT = 3922;
+my $WIKIA_ID_MAX = 5000;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -36,7 +36,7 @@ my $mediawiki_params = '?action=query&meta=siteinfo&siprop=statistics&format=jso
 
 # listUsers API
 my $listUsers_url;
-my $listUsers_post_endpoint = '/index.php?' . 'action=ajax&rs=ListusersAjax::axShowUsers';
+my $listUsers_post_endpoint = 'index.php?' . 'action=ajax&rs=ListusersAjax::axShowUsers';
 
 # wiki info
 my $wiki_name;
@@ -95,7 +95,7 @@ sub request_all_users {
 
     my $res = $br->post($listUsers_url, @form_data);
     if (not $res->is_success) {
-        die $res->status_line.' when posting to Special:ListUsers for edits ' . $edits;
+         die $res->status_line ." when posting to $listUsers_url, for users with $edits edits, for wiki $wiki_name with id: $wikia_id.";
     }
 
     my $raw_users_content = $res->decoded_content();
@@ -160,12 +160,13 @@ sub extract_users_by_contributions {
 # To fill $csv_columns => 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 sub print_wiki_to_csv {
     my ($deleted) = @_;
-    say "Printing info for wiki $wikia_id .....";
 
     if (defined $deleted) {
+	say "!! Printing info for wiki $wikia_id into $deleted_wikis_filename .....";
         print DELETED_CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
 
     } else {
+        say "Printing info for wiki $wikia_id .....";
         print CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
     }
 }
@@ -190,8 +191,27 @@ sub is_wiki_url_ok {
         }
     }
 
-    if ($res->is_success) {
+    if ($res->is_success) {	
+	my @form_data = [
+        	groups => "staff,",
+        	username => "",
+        	edits => 20,
+        	limit => "1",
+        	offset => "0",
+        	loop => 1, # simulate user behaviour
+        	numOrder => "1",
+        	order => "username:asc"
+    	];
+
+ 	my $res = $br->post($listUsers_url, @form_data);
+        if (not $res->is_success) {
+        	say STDERR $res->status_line ." when posting to $listUsers_url, for wiki $wiki_name with id: $wikia_id.";
+		return -1; # problem requesting ListUsers, store the info we succeed to get into deleted wikis file
+    	}
+
         return 1; # return "wiki url is ok"
+
+
     #~ } elsif ($res->is_redirect) {
         #~ my $wiki_url_new = uri_unescape($res->header('Location'));
         #~ my $wiki_url_new = $res->header('Location');
@@ -258,7 +278,7 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
             }
         } else {
             say STDERR "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;
-            die "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;
+            next;
         }
     }
     #~ say $res->headers()->as_string;
@@ -276,6 +296,7 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
     $wiki_info = $json_res->{'items'}->{$wikia_id};
     extract_wiki_info_from_wikia_json();
 
+    $listUsers_url = $wiki_url . $listUsers_post_endpoint;
     my $wiki_url_status = is_wiki_url_ok();
     if ($wiki_url_status < 0) {
         if ($wiki_url_status == -1 ) { # deleted wiki. We keep track of it.
@@ -292,7 +313,6 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
     }
 
     # Getting users using Special:ListUsers page
-    $listUsers_url = $wiki_url . $listUsers_post_endpoint;
     extract_users_by_contributions();
 
 

@@ -1,5 +1,4 @@
-data/
-output.xml
-wikia_census.csv
-deleted_wikia_census.csv
-error.log
+wikia_census.csv*
+deleted_wikia_census.csv*
+error.log*
+*.swp

@@ -24,7 +24,7 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 # Define id max to iterate until.
 my $WIKIA_ID_INIT = 3920;
-my $WIKIA_ID_MAX = 3920;
+my $WIKIA_ID_MAX = 3980;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -36,7 +36,7 @@ my $mediawiki_params = '?action=query&meta=siteinfo&siprop=statistics&format=jso
 
 # listUsers API
 my $listUsers_url;
-my $listUsers_post_endpoint = '/index.php?' . 'action=ajax&rs=ListusersAjax::axShowUsers';
+my $listUsers_post_endpoint = 'index.php?' . 'action=ajax&rs=ListusersAjax::axShowUsers';
 
 # wiki info
 my $wiki_name;
@@ -58,12 +58,13 @@ my $census_filename = 'wikia_census.csv';
 my $deleted_wikis_filename = 'deleted_wikia_census.csv';
 my $closed_wikis_filename = 'closed_wikia_census.csv';
 my $no_main_wikis_filename = 'no_main_wikia_census.csv';
+my @output_filenames = ($census_filename, $deleted_wikis_filename, $closed_wikis_filename, $no_main_wikis_filename);
 my $csv_columns = 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 
 
 # output filehandlers
 my $csv_fh, my $deleted_csv_fh, my $closed_csv_fh, my $no_main_csv_fh;
-my @filehandlers = ($csv_fh, $deleted_csv_fh, $closed_csv_fh, $no_main_csv_fh);
+my @filehandlers;
 
 # other variables
 my $wikia_id;
@@ -79,6 +80,7 @@ sub open_output_file {
     open ($filehandle, " >> $encoding", $filename) or die "Error trying to write on $filename: $!\n";
     autoflush $filehandle 1;
     print $filehandle "$csv_columns\n" if $create_if_not_exists;
+    push (@filehandlers, $filehandle);
     return $filehandle;
 }
 
@@ -115,7 +117,7 @@ sub request_all_users {
 
     my $res = $br->post($listUsers_url, @form_data);
     if (not $res->is_success) {
-        die $res->status_line.' when posting to Special:ListUsers for edits ' . $edits;
+         die $res->status_line ." when posting to $listUsers_url, for users with $edits edits, for wiki $wiki_name with id: $wikia_id.";
     }
 
     my $raw_users_content = $res->decoded_content();
@@ -179,19 +181,23 @@ sub extract_users_by_contributions {
 
 # To fill $csv_columns => 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
 
-# arguments = $fh: filehandle for the output csv
+# arguments = ($fh, $filename)
+#   $fh: filehandle for the output csv
+#   $filename: filename for the output csv
 sub print_wiki_to_csv {
-    my ($fh) = @_;
-    say "Printing info for wiki $wikia_id .....";
+    my ($fh, $filename) = @_;
 
+    say "\n ---> Printing info for wiki $wikia_id into $filename .....";
     print $fh "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
 
 }
 
-# returns:   1 if url is ok,
-#           -1 if the wiki's been deleted ,
-#           -2 in case that Wikia says that it is an invalid wiki url
-#           -3 in case of an http error,
+# returns:   1 if $wiki_url is ok,
+#           -1 if the wiki's been deleted,
+#           -2 in case that Wikia says that it is an invalid wiki url,
+#           -3 in case of an 404 error,
+#           -4 in case of users database is locked (closed wiki)
+
 sub is_wiki_url_ok {
     my $res = $br->head($wiki_url);
 
@@ -209,25 +215,30 @@ sub is_wiki_url_ok {
     }
 
     if ($res->is_success) {
+	my @form_data = [
+        	groups => "staff,",
+        	username => "",
+        	edits => 20,
+        	limit => "1",
+        	offset => "0",
+        	loop => 1, # simulate user behaviour
+        	numOrder => "1",
+        	order => "username:asc"
+    	];
+
+ 	my $res = $br->post($listUsers_url, @form_data);
+        if (not $res->is_success) {
+        	say STDERR $res->status_line ." when posting to $listUsers_url, for wiki $wiki_name with id: $wikia_id.";
+            return -4; # problem requesting ListUsers
+    	}
+
         return 1; # return "wiki url is ok"
-    #~ } elsif ($res->is_redirect) {
-        #~ my $wiki_url_new = uri_unescape($res->header('Location'));
-        #~ my $wiki_url_new = $res->header('Location');
 
-        #~ print $wiki_url_new;
-        #~ die;
-
-        #~ say "Changing wiki url from $wiki_url to $wiki_url_new by an HTTP redirect";
-        #~ if ($wiki_url_new =~ m/community\.wikia\.com\/wiki\/Special\:CloseWiki/) {
-                #~ return -1; # return "wiki has been deleted"
-        #~ } else {
-                #~ say "Executing again is_wiki_url_ok with new URL.\n";
-                #~ $wiki_url = $wiki_url_new;
-                #~ return is_wiki_url_ok();
-        #~ }
-    } else {
+    } elsif ($res->code == 404) {
         say STDERR "Error found checking wiki $wiki_name with url $wiki_url for wiki with id $wikia_id: " . $res->status_line;
-        return -3; # return "There's an error requesting $wiki_url"
+        return -3; # return "There's a 404 NOT Found error when requesting $wiki_url"
+    } else {
+        die "Unexpected HTTP Error found checking wiki $wiki_name with url $wiki_url for wiki with id $wikia_id: " . $res->status_line;
     }
 }
 
@@ -235,7 +246,10 @@ sub is_wiki_url_ok {
 #### Starts main(): #####
 
 # creating CSV files handler for writing
-open_output_file($_) foreach (@filehandlers);
+$csv_fh = open_output_file($census_filename);
+$deleted_csv_fh = open_output_file($deleted_wikis_filename);
+$closed_csv_fh = open_output_file($closed_wikis_filename);
+$no_main_csv_fh = open_output_file($no_main_wikis_filename);
 
 
 # Iterating over ids
@@ -268,7 +282,7 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
             }
         } else {
             say STDERR "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;
-            die "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;
+            next;
         }
     }
     #~ say $res->headers()->as_string;
@@ -289,26 +303,31 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
     # clean up output user by contribution values:
     $_ = '' foreach (@users_by_contributions);
 
+    $listUsers_url = $wiki_url . $listUsers_post_endpoint;
     my $wiki_url_status = is_wiki_url_ok();
     if ($wiki_url_status < 0) {
-        if ($wiki_url_status == -1 ) { # deleted wiki. We keep track of this.
-            print_wiki_to_csv($deleted_csv_fh);
+        if ($wiki_url_status == -1) { # deleted wiki. We keep track of this.
+            print_wiki_to_csv($deleted_csv_fh, $deleted_wikis_filename);
             next;
-
-        } else {
-            # invalid url found. Skipping from census.
+        } elsif ($wiki_url_status == -3) { # Main page is not found but wiki exists.
+            print_wiki_to_csv($no_main_csv_fh, $no_main_wikis_filename);
+            next;
+        } elsif ($wiki_url_status == -4) { # Database users is locked. Wiki is discontinued
+            print_wiki_to_csv($closed_csv_fh, $closed_wikis_filename);
+            next;
+        } else { # $wiki_url_status == -2
+            # invalid url. Skipping from census.
             print STDERR "--> Skipping from census <-- \n";
             next;
         }
     }
 
     # Getting users using Special:ListUsers page
-    $listUsers_url = $wiki_url . $listUsers_post_endpoint;
     extract_users_by_contributions();
 
 
     # Info retrieved, printing:
-    print_wiki_to_csv($csv_fh);
+    print_wiki_to_csv($csv_fh, $census_filename);
 
     say ("Non bot users per contribution: ");
     print "$_, " foreach (@users_by_contributions);

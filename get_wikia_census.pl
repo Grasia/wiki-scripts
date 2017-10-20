@@ -23,8 +23,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 2733;
-my $WIKIA_ID_MAX = 2735;
+my $WIKIA_ID_INIT = 3920;
+my $WIKIA_ID_MAX = 3920;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -56,11 +56,31 @@ my @users_by_contributions = ('', '', '', '', '', '');
 # csv variables
 my $census_filename = 'wikia_census.csv';
 my $deleted_wikis_filename = 'deleted_wikia_census.csv';
+my $closed_wikis_filename = 'closed_wikia_census.csv';
+my $no_main_wikis_filename = 'no_main_wikia_census.csv';
 my $csv_columns = 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
+
+
+# output filehandlers
+my $csv_fh, my $deleted_csv_fh, my $closed_csv_fh, my $no_main_csv_fh;
+my @filehandlers = ($csv_fh, $deleted_csv_fh, $closed_csv_fh, $no_main_csv_fh);
 
 # other variables
 my $wikia_id;
 my $wiki_info;
+
+
+# one argument: ($filename) => the file name for the file to create and open
+sub open_output_file {
+    my ($filename) = @_;
+    my $encoding = ":encoding(UTF-8)";
+    my $filehandle = undef;
+    my $create_if_not_exists = not -e $filename;
+    open ($filehandle, " >> $encoding", $filename) or die "Error trying to write on $filename: $!\n";
+    autoflush $filehandle 1;
+    print $filehandle "$csv_columns\n" if $create_if_not_exists;
+    return $filehandle;
+}
 
 # one argument => wiki_info that is a dictionary with all info retrieved from wikia API
 sub extract_wiki_info_from_wikia_json {
@@ -158,16 +178,14 @@ sub extract_users_by_contributions {
 
 
 # To fill $csv_columns => 'id, name, url, articles, pages, active users, admins, users_1, users_5, users_10, users_20, users_50, users_100, edits, lang, hub, topic';
+
+# arguments = $fh: filehandle for the output csv
 sub print_wiki_to_csv {
-    my ($deleted) = @_;
+    my ($fh) = @_;
     say "Printing info for wiki $wikia_id .....";
 
-    if (defined $deleted) {
-        print DELETED_CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
+    print $fh "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
 
-    } else {
-        print CSV "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
-    }
 }
 
 # returns:   1 if url is ok,
@@ -217,15 +235,7 @@ sub is_wiki_url_ok {
 #### Starts main(): #####
 
 # creating CSV files handler for writing
-my $print_columns = not -e $census_filename;
-open CSV, " >>$census_filename" or die "Error trying to write on $census_filename: $!\n";
-autoflush CSV 1;
-print CSV "$csv_columns\n" if $print_columns;
-
-$print_columns = not -e $deleted_wikis_filename;
-open DELETED_CSV, " >>$deleted_wikis_filename" or die "Error trying to write on $deleted_wikis_filename: $!\n";
-autoflush DELETED_CSV 1;
-print DELETED_CSV "$csv_columns\n" if $print_columns;
+open_output_file($_) foreach (@filehandlers);
 
 
 # Iterating over ids
@@ -276,12 +286,13 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
     $wiki_info = $json_res->{'items'}->{$wikia_id};
     extract_wiki_info_from_wikia_json();
 
+    # clean up output user by contribution values:
+    $_ = '' foreach (@users_by_contributions);
+
     my $wiki_url_status = is_wiki_url_ok();
     if ($wiki_url_status < 0) {
-        if ($wiki_url_status == -1 ) { # deleted wiki. We keep track of it.
-            $_ = '' foreach (@users_by_contributions); # assign empty string to users since we are unable to get them through Special:ListUsers
-            my $deleted_flag = 1;
-            print_wiki_to_csv($deleted_flag);
+        if ($wiki_url_status == -1 ) { # deleted wiki. We keep track of this.
+            print_wiki_to_csv($deleted_csv_fh);
             next;
 
         } else {
@@ -297,7 +308,7 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
 
 
     # Info retrieved, printing:
-    print_wiki_to_csv();
+    print_wiki_to_csv($csv_fh);
 
     say ("Non bot users per contribution: ");
     print "$_, " foreach (@users_by_contributions);
@@ -306,8 +317,8 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
     $retried = 0; # clean up retried
 }
 
-close(CSV);
-close(DELETED_CSV);
+
+close ($_) foreach (@filehandlers);
 
 
 ###############################################

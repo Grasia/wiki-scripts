@@ -23,8 +23,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 3920;
-my $WIKIA_ID_MAX = 3980;
+my $WIKIA_ID_INIT = 1221;
+my $WIKIA_ID_MAX = 1221;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -117,7 +117,13 @@ sub request_all_users {
 
     my $res = $br->post($listUsers_url, @form_data);
     if (not $res->is_success) {
-         die $res->status_line ." when posting to $listUsers_url, for users with $edits edits, for wiki $wiki_name with id: $wikia_id.";
+        if ($res->code == HTTP_INTERNAL_SERVER_ERROR) {
+            say STDERR "Received 500 Internal Server Error response when posting to $listUsers_url querying for all users.. Retrying again after 10 seconds...";
+            sleep 10;
+            return request_all_users($loop, $edits);
+        } else {
+            die $res->status_line.' when posting to Special:ListUsers querying for all users.';
+        }
     }
 
     my $raw_users_content = $res->decoded_content();
@@ -146,7 +152,13 @@ sub request_bot_users {
 
     my $res = $br->post($listUsers_url, @form_data_for_bots);
     if (not $res->is_success) {
-        die $res->status_line.' when posting to Special:ListUsers querying for bot users.';
+        if ($res->code == HTTP_INTERNAL_SERVER_ERROR) {
+            say STDERR "Received 500 Internal Server Error response when posting to $listUsers_url querying for bot users.. Retrying again after 10 seconds...";
+            sleep 10;
+            return request_bot_users($loop, $edits);
+        } else {
+            die $res->status_line.' when posting to Special:ListUsers querying for bot users.';
+        }
     }
 
     my $raw_users_content = $res->decoded_content();
@@ -278,7 +290,7 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
                 $retried++;
                 redo;
             } else {
-                die 'Too many intents: ' . $res->status_line . ' when getting wikias from ' . $api_request;
+                die 'Too many intents: ' . $res->status_line . ' when getting wikias from ' . $api_request . '\nRestart the script later.';
             }
         } else {
             say STDERR "Unexpected error when getting data for $wikia_id. Request was $api_request. Error: " . $res->status_line;

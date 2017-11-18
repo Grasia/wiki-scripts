@@ -23,8 +23,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 1221;
-my $WIKIA_ID_MAX = 1221;
+my $WIKIA_ID_INIT = 85499;
+my $WIKIA_ID_MAX = 85499;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -217,6 +217,7 @@ sub print_wiki_to_csv {
 #           -2 in case that Wikia says that it is an invalid wiki url,
 #           -3 in case of an 404 error,
 #           -4 in case of users database is locked (closed wiki)
+#           -5 in case of another unexpected error. For example: 403 Forbidden response
 
 sub is_wiki_url_ok {
     my $res = $br->head($wiki_url);
@@ -258,7 +259,8 @@ sub is_wiki_url_ok {
         say STDERR "Error found checking wiki $wiki_name with url $wiki_url for wiki with id $wikia_id: " . $res->status_line;
         return -3; # return "There's a 404 NOT Found error when requesting $wiki_url"
     } else {
-        die "Unexpected HTTP Error found checking wiki $wiki_name with url $wiki_url for wiki with id $wikia_id: " . $res->status_line;
+        say STDERR "Unexpected HTTP Error found checking wiki $wiki_name with url $wiki_url for wiki with id $wikia_id: " . $res->status_line;
+        return -5; # return 'unknown' error.
     }
 }
 
@@ -335,8 +337,8 @@ for ($wikia_id = $WIKIA_ID_INIT; $wikia_id <= $WIKIA_ID_MAX; $wikia_id++) {
         } elsif ($wiki_url_status == -4) { # Database users is locked. Wiki is discontinued
             print_wiki_to_csv($closed_csv_fh, $closed_wikis_filename);
             next;
-        } else { # $wiki_url_status == -2
-            # invalid url. Skipping from census.
+        } else { # $wiki_url_status == -2 or $wiki_url_status == -5
+            # Unexpected error. Log and skip from census
             print STDERR "--> Skipping from census <-- \n";
             next;
         }

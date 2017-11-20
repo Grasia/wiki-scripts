@@ -38,6 +38,7 @@ my $stm = time;
 
 #####  Begin logic: #####
 
+print "Selected api url endpoint: $api_url\n";
 mkdir $output_dir unless -d $output_dir;
 
 # saving cookies file
@@ -47,20 +48,21 @@ $br->agent("ma_dump/1.2");
 $br->cookie_jar(HTTP::Cookies->new(file => $output_dir . "cookies.txt", autosave => 1, ignore_discard => 1));
 
 # Getting namespaces listing for this wiki
-my $ns_api_url = $api_url . "?action=query&meta=siteinfo&siprop=namespaces&format=json";
-my $res = $br->get($ns_api_url);
-if ($res->is_success) {
-        my $json_res = decode_json($res->decoded_content);
-        #my @hash = $json_res->{'query'}{'namespaces'};
-        ##~ print $json_res->{'query'}{'namespaces'}{'-2'}{'id'};
-        my @available_namespaces = keys $json_res->{'query'}{'namespaces'};
-        print "These are the namespaces available for this wiki: " . join(', ', @available_namespaces) . "\n";
-} else {
-        die $res->status_line." when getting namespaces from $ns_api_url";
-}
+#~ (Not being used yet)
+#~ my $ns_api_url = $api_url . "?action=query&meta=siteinfo&siprop=namespaces&format=json";
+#~ my $res = $br->get($ns_api_url);
+#~ if ($res->is_success) {
+        #~ my $json_res = decode_json($res->decoded_content);
+        #~ #my @hash = $json_res->{'query'}{'namespaces'};
+        #~ ##~ print $json_res->{'query'}{'namespaces'}{'-2'}{'id'};
+        #~ my @available_namespaces = keys $json_res->{'query'}{'namespaces'};
+        #~ print "These are the namespaces available for this wiki: " . join(', ', @available_namespaces) . "\n";
+#~ } else {
+        #~ die $res->status_line." when getting namespaces from $ns_api_url";
+#~ }
 
 #my @namespaces = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 102, 103, 110, 111); # probably should fetch this list from somewhere
-#my @namespaces = (0); # just the main namespace
+#~ my @namespaces = (0); # just the main namespace
 my @namespaces = (-2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 110, 111, 500, 501, 502, 503, 1200, 1201, 1202, 2000, 2001, 2002); # list extracted from wikia_dashboard namespace analysis. anyways, why this list?
 # more info about namespaces here: http://community.wikia.com/wiki/Help:Namespace
 

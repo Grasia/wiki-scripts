@@ -145,9 +145,10 @@ def xml_to_csv(filename):
 
 if __name__ == "__main__":
   print (sys.argv)
-  if(len(sys.argv)) == 2:
-    print("Starting to parse file " + sys.argv[1])
-    if xml_to_csv(sys.argv[1]):
-      print("Data dump parsed succesfully")
+  if(len(sys.argv)) >= 2:
+    for xmlfile in sys.argv[1:]:
+      print("Starting to parse file " + xmlfile)
+      if xml_to_csv(xmlfile):
+        print("Data dump {} parsed succesfully".format(xmlfile))
   else:
-    print("Error: Invalid number of arguments. Please specify a .xml file to parse", file=sys.stderr)
+    print("Error: Invalid number of arguments. Please specify one or more .xml file to parse", file=sys.stderr)

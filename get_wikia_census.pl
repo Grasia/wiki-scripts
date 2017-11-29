@@ -23,8 +23,8 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 
 # Define id max to iterate until.
-my $WIKIA_ID_INIT = 85499;
-my $WIKIA_ID_MAX = 85499;
+my $WIKIA_ID_INIT = 1;
+my $WIKIA_ID_MAX = 100000;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -208,7 +208,7 @@ sub print_wiki_to_csv {
     my ($fh, $filename) = @_;
 
     say "\n ---> Printing info for wiki $wikia_id into $filename .....";
-    print $fh "$wikia_id, $wiki_name, $wiki_url, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
+    print $fh "$wikia_id, $wiki_name, $wiki_url, $wiki_articles, $wiki_pages, $wiki_active_users, $wiki_admins, $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $wiki_edits, $wiki_lang, $wiki_hub, $wiki_topic \n";
 
 }
 

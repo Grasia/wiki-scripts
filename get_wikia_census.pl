@@ -24,7 +24,7 @@ $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
 # Define id max to iterate until.
 my $WIKIA_ID_INIT = 1;
-my $WIKIA_ID_MAX = 100000;
+my $WIKIA_ID_MAX = 1000000;
 
 # wikia API
 my $wikia_endpoint = 'http://www.wikia.com/api/v1';
@@ -160,7 +160,7 @@ sub request_bot_users {
             say STDERR "Received 500 Internal Server Error response when posting to $listUsers_url querying for bot users.. Retrying again after 10 seconds...";
             sleep 10;
             return request_bot_users($loop, $edits);
-        } elsif (res->code == 503) {
+        } elsif ($res->code == 503) {
             say STDERR "Received 503 Service Unavailable Error response when posting to $listUsers_url querying for all users.. Retrying again after 10 seconds...";
             sleep 10;
             return request_all_users($loop, $edits);

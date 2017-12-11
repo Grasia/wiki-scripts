@@ -121,7 +121,7 @@ sub request_all_users {
             say STDERR "Received 500 Internal Server Error response when posting to $listUsers_url querying for all users.. Retrying again after 10 seconds...";
             sleep 10;
             return request_all_users($loop, $edits);
-        } elsif (res->code == 503) {
+        } elsif ($res->code == 503) {
             say STDERR "Received 503 Service Unavailable Error response when posting to $listUsers_url querying for all users.. Retrying again after 10 seconds...";
             sleep 10;
             return request_all_users($loop, $edits);

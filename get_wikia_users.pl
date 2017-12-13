@@ -14,6 +14,7 @@ use LWP::ConnCache;
 use Data::Dumper;
 use HTTP::Status qw(:constants :is status_message);
 use IO::Handle;
+use URI::Escape;
 
 # browser agent
 my $br = LWP::UserAgent->new;
@@ -22,7 +23,7 @@ $br->timeout(15);
 $br->agent("Mozilla/5.0");
 
 # csv variables
-my $csv_columns = 'user_id, username, is_bot, registration, gender'; # note that username is | delimited
+my $csv_columns = 'user_id,username,is_bot,registration,gender'; # note that username is quoted with the | symbol
 my $output_filename = 'wikia_users.csv';
 my $csv_fh;
 
@@ -32,42 +33,17 @@ sub open_output_file {
     my $encoding = ":encoding(UTF-8)";
     my $filehandle = undef;
     my $create_if_not_exists = not -e $filename;
-    open ($filehandle, " > $encoding", $filename) or die "Error trying to write on $filename: $!\n";
+    open ($filehandle, " >> $encoding", $filename) or die "Error trying to write on $filename: $!\n";
     autoflush $filehandle 1;
     print $filehandle "$csv_columns\n" if $create_if_not_exists;
     return $filehandle;
 }
 
-# one argument: (@users_info) => array with retrieved users_info to process
-sub process_users_info() {
-    my (@users_info) = @_;
-
-    foreach my $user (@users_info) {
-
-        $user->{'registration'} = 'NaT' unless defined $user->{'registration'};
-
-        #~ my @user_groups = @{$user->{'groups'}};
-        my %user_groups = map { $_ => 1 } @{$user->{'groups'}}; # convert users_groups array to hash
-        my $is_bot, my $bot = 'bot', my $bot_global = 'bot-global';
-        if( exists($user_groups{$bot}) or exists($user_groups{$bot_global}) ) {
-            $is_bot = 'True';
-        } else {
-            $is_bot = 'False';
-        }
-
-        #~ say Dumper($user);
-        #~ say ref($user);
-        print "$user->{'userid'}, $user->{'name'}, $is_bot, $user->{'registration'}, $user->{'gender'}\n";
-    }
-}
-
-
 my $base_url = 'http://www.wikia.com/';
 my $usids = ''; # a | separated list of user ids to retrieve in shape of string.
 
 my $json_res;
-my $aufrom = '';
-
+my $aufrom = ''; # Don't escape when retrieving the first users
 
 $csv_fh = open_output_file($output_filename);
 
@@ -97,6 +73,7 @@ do {
     $should_continue = defined $json_res->{'query-continue'};
     $aufrom = $json_res->{'query-continue'}->{'allusers'}->{'aufrom'} if $should_continue;
     say "--> Next username to retrieve in following iteration: $aufrom";
+    $aufrom = uri_escape( $aufrom );
 
     # Second, use the retrieved user ids in order to get info of those users
     my $usersinfo_endpoint = $base_url . "api.php?action=query&list=users&usprop=groups|gender|registration&format=json&usids=$usids";
@@ -124,9 +101,11 @@ do {
 
         #~ say Dumper($user);
         #~ say ref($user);
+        my $username = uri_unescape($user->{'name'});
 
         # using | as delimiter for usernames since some can have whitespaces and other rare symbols
-        print $csv_fh "$user->{'userid'}, |$user->{'name'}|, $is_bot, $user->{'registration'}, $user->{'gender'}\n";
+        print $csv_fh "$user->{'userid'},|$username|,$is_bot,$user->{'registration'},$user->{'gender'}\n";
+
     }
 
 } while ($should_continue);

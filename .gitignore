@@ -1,7 +1,3 @@
-wikia_census.csv*
-deleted_wikia_census.csv*
-closed_wikia_census.csv
-no_main_wikia_census.csv
-wikia_users.csv*
+*.csv*
 error.log*
 *.swp

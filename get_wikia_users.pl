@@ -44,8 +44,15 @@ my $usids = ''; # a | separated list of user ids to retrieve in shape of string.
 
 my $json_res;
 my $aufrom = ''; # Don't escape when retrieving the first users
+#~ $aufrom = uri_escape_utf8('Jhoanst'); # fill with last aufrom for continuing in the event of the script was stopped
 
 $csv_fh = open_output_file($output_filename);
+
+sub smartdecode {
+    my $x = my $y = uri_unescape($_[0]);
+    return $x if utf8::decode($x);
+    return $y;
+}
 
 my $i = 0;
 my $should_continue = 0;
@@ -73,7 +80,7 @@ do {
     $should_continue = defined $json_res->{'query-continue'};
     $aufrom = $json_res->{'query-continue'}->{'allusers'}->{'aufrom'} if $should_continue;
     say "--> Next username to retrieve in following iteration: $aufrom";
-    $aufrom = uri_escape( $aufrom );
+    $aufrom = uri_escape_utf8( $aufrom );
 
     # Second, use the retrieved user ids in order to get info of those users
     my $usersinfo_endpoint = $base_url . "api.php?action=query&list=users&usprop=groups|gender|registration&format=json&usids=$usids";
@@ -101,7 +108,7 @@ do {
 
         #~ say Dumper($user);
         #~ say ref($user);
-        my $username = uri_unescape($user->{'name'});
+        my $username = smartdecode($user->{'name'});
 
         # using | as delimiter for usernames since some can have whitespaces and other rare symbols
         print $csv_fh "$user->{'userid'},|$username|,$is_bot,$user->{'registration'},$user->{'gender'}\n";

@@ -15,6 +15,7 @@
 import requests
 import sys
 import json
+import re
 
 endpoint = '/api.php?action=query&list=groupmembers&gmgroups=bot|bot-global&gmlimit=500&format=json'
 
@@ -48,6 +49,8 @@ def main():
          exit(0)
 
       for url in sys.argv[1:]:
+         if not (re.search('^http', url)):
+            url = 'http://' + url
          print("Retrieving data for: " + url)
          bots_ids = get_bots_ids(url)
          print("These are the bots ids:")

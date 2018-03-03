@@ -41,7 +41,7 @@ part = 0
 dates = []
 
 for link in links:
-    if i%5000==0:
+    if i>0 and i%5000==0:
         write_to_csv(dates, part)
         part += 1
         dates = []

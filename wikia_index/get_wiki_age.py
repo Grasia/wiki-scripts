@@ -29,7 +29,7 @@ with open(wikiaIndex) as f:
 
 import csv
 def write_to_csv(dates, part):
-    with open('wikia_ages-{}.csv'.format(part), 'w') as myfile:
+    with open('wikia_ages-{0:02}.csv'.format(part), 'w') as myfile:
         myfile.write("%s\n" % ('url, creation'))
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         for date in dates:

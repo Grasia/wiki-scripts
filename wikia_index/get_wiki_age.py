@@ -4,6 +4,7 @@ import requests
 suffix = "?dir=prev&action=history"
 sample_url = "http://10low46japreligion.wikia.com/"
 wikiaIndex = '20180220-wikiaIndex.txt'
+output_filename = 'wikia_ages'
 
 url = sample_url+suffix
 
@@ -29,7 +30,7 @@ with open(wikiaIndex) as f:
 
 import csv
 def write_to_csv(dates, part):
-    with open('wikia_ages-{0:02}.csv'.format(part), 'w') as myfile:
+    with open('{}-{0:02}.csv'.format(output_filename, part), 'w') as myfile:
         myfile.write("%s\n" % ('url, creation'))
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         for date in dates:

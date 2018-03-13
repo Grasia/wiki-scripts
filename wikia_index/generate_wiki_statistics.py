@@ -4,7 +4,7 @@ import requests
 sample_url = "http://clashofclans.wikia.com/wiki/Special:Statistics"
 
 rowSelector = "tr.mw-statistics-"
-stats = ["articles",'pages','files','edits','edits-average','users','users-active']
+stats = ['articles','pages','files','edits','edits-average','users','users-active']
 groupStats = ['bot', 'sysop']
 wikiaIndex = '20180220-wikiaIndex.txt'
 
@@ -12,7 +12,7 @@ with open(wikiaIndex) as f:
     links = [line.strip() for line in f]
 
 def procesaURL(url, data):
-     # Realizamos la petición a la web
+    # Realizamos la petición a la web
     req = requests.get(url)
 
     # Comprobamos que la petición nos devuelve un Status Code = 200

@@ -8,9 +8,8 @@ use LWP::ConnCache;
 use Data::Dumper;
 use HTTP::Status qw(:constants :is status_message);
 use IO::Handle;
-use XML::LibXML;
-
 use HTML::Strip;
+
 my $hs = HTML::Strip->new();
 
 my $br = LWP::UserAgent->new;

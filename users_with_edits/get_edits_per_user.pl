@@ -19,14 +19,17 @@ $br->timeout(45);
 $br->agent("Mozilla/5.0");
 $br->requests_redirectable(['POST', 'HEAD', 'GET']);
 
+my $mediawiki_endpoint = 'api.php';
+my $mediawiki_params = '?action=query&meta=siteinfo&siprop=general|statistics&format=json';
+
 # listUsers API
 my $listUsers_url;
 my $listUsers_post_endpoint = 'index.php?' . 'action=ajax&rs=ListusersAjax::axShowUsers';
 
 # file-related variables
-my $output_filename = 'wikia_edits.txt';
-my $urls_filename = '20180220-wikiaIndex.txt';
-my $csv_columns = 'url, edits_per_user';
+my $output_filename = 'wikia_edits-part1.csv';
+my $urls_filename = '20180220-wikiaIndex-part1.txt';
+my $csv_columns = 'url; wiki_name; total_edits; edits_per_user; bots';
 
 # output filehandlers
 my $output_fh;
@@ -45,36 +48,50 @@ sub open_output_file {
     my $create_if_not_exists = not -e $filename;
     open ($filehandle, " >> $encoding", $filename) or die "Error trying to write on $filename: $!\n";
     autoflush $filehandle 1;
-    #~ print $filehandle "$csv_columns\n" if $create_if_not_exists;
+    print $filehandle "$csv_columns\n" if $create_if_not_exists;
     return $filehandle;
 }
 
 
-# order of arguments = ($loop, $url)
+# order of arguments = ($loop, $url, $query_bots)
 sub print_all_users {
-    my ($loop, $url) = @_;
+    my ($loop, $url, $query_bots) = @_;
     $offset = $limit * $loop;
-    my @form_data = [
-        groups => "all,bureaucrat,rollback,sysop,threadmoderator,authenticated,content-reviewer,council,fandom-editor,global-discussions-moderator,helper,restricted-login,restricted-login-exempt,reviewer,staff,util,vanguard,voldev,vstf,",
-        username => "",
-        edits => 0,
-        limit => $limit,
-        offset => $offset,
-        loop => $loop, # simulate user behaviour
-        numOrder => "1",
-        order => "username:asc"
-    ];
+    my @form_data ;
+    if (not $query_bots) {
+       @form_data = [
+            groups => "all,bureaucrat,rollback,sysop,threadmoderator,authenticated,content-reviewer,council,fandom-editor,global-discussions-moderator,helper,restricted-login,restricted-login-exempt,reviewer,staff,util,vanguard,voldev,vstf,",
+            username => "",
+            edits => 0,
+            limit => $limit,
+            offset => $offset,
+            loop => $loop, # simulate user behaviour
+            numOrder => "1",
+            order => "username:asc"
+        ];
+    } else {
+        @form_data = [
+            groups => "bot,bot-global,",
+            username => "",
+            edits => 0,
+            limit => $limit,
+            offset => $offset,
+            loop => $loop, # simulate user behaviour
+            numOrder => "1",
+            order => "username:asc"
+        ];
+    }
 
     my $res = $br->post($url, @form_data);
     if (not $res->is_success) {
         if ($res->code == HTTP_INTERNAL_SERVER_ERROR) {
             say STDERR "Received 500 Internal Server Error response when posting to $listUsers_url querying for all users.. Retrying again after 10 seconds...";
             sleep 10;
-            return print_all_users($loop, $url);
+            return print_all_users($loop, $url, $query_bots);
         } elsif ($res->code == 503) {
             say STDERR "Received 503 Service Unavailable Error response when posting to $listUsers_url querying for all users.. Retrying again after 10 seconds...";
             sleep 10;
-            return print_all_users($loop, $url);
+            return print_all_users($loop, $url, $query_bots);
         } else {
             return -1;
         }
@@ -85,7 +102,16 @@ sub print_all_users {
     my $json_res = decode_json($raw_users_content);
     #~ print Dumper($json_res);
     $users = $json_res->{'iTotalDisplayRecords'};
-    say "Total users with edits equal or higher than 0 is: $users" if $loop == 0;
+
+
+    if ($loop == 0) {
+        if (not $query_bots) {
+            say "Total users with edits equal or higher than 0 is: $users";
+        } else {
+            say "\nTotal bots with edits equal or higher than 0 is: $users";
+        }
+    }
+
 
     #~ print Dumper($json_res);
 
@@ -114,19 +140,36 @@ sub print_all_users {
 
 sub extract_edits_and_print {
     my ($url) = @_;
+
+    # printing edits per human user using Special:ListUsers page
     my $loop = 0;
     do {
-        if (print_all_users($loop, $url) < 0) {
+        if (print_all_users($loop, $url, 0) < 0) {
             print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';
             print STDERR "--> Skipping from index <-- \n";
-            print $output_fh ("-1\n");
-            return;
+            print $output_fh ("-1; -1\n");
+            return -1;
         }
         $loop++;
     } while ($loop <= $users / $limit);
 
-    print ("\n");
-    print $output_fh ("\n");
+    print ("; ");
+    print $output_fh ("; ");
+
+    # printing edits per bot user using Special:ListUsers page
+    my $loop = 0;
+    do {
+        if (print_all_users($loop, $url, 1) < 0) {
+            print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';
+            print STDERR "--> Skipping from index <-- \n";
+            print $output_fh ("-1\n");
+            return -1;
+        }
+        $loop++;
+    } while ($loop <= $users / $limit);
+
+
+    return 0;
 }
 
 
@@ -205,22 +248,40 @@ foreach (@wikia_urls) {
 
     sleep 0.5; # Artificial delay to not saturate wikia' servers
 
+    # printing url
+    print $output_fh ("$wiki_url; ");
+
     say ("Retrieving data for wiki: $wiki_url");
 
-    # Get
+    # Check if wiki OK
     $listUsers_url = $wiki_url . $listUsers_post_endpoint;
     my $wiki_url_status = is_wiki_url_ok($wiki_url, $listUsers_url);
     if ($wiki_url_status < 0) {
         print STDERR "--> Skipping from index <-- \n";
-        print $output_fh ("-1\n");
+        print $output_fh ("-1; -1; -1; -1\n");
         next;
     }
 
+    # get total editions number
+    my $api_request = $wiki_url . $mediawiki_endpoint . $mediawiki_params;
+    my $res = $br->get($api_request);
 
+    if (not $res->is_success) {
+        print STDERR "--> Skipping from index <-- \n";
+        print $output_fh ("-1; -1; -1; -1\n");
+        next;
+    }
+    my $json_res = decode_json($res->decoded_content);
+    #~ print Dumper($json_res);
+    $wiki_edits = $json_res->{'query'}->{'statistics'}->{'edits'};
+    $wiki_name = $json_res->{'query'}->{'general'}->{'sitename'};
+    print $output_fh ("\"$wiki_name\"; $wiki_edits; ");
 
-    # printing edits per users using Special:ListUsers page
+    # get editions per user
     extract_edits_and_print($listUsers_url);
 
+    print ("\n");
+    print $output_fh ("\n");
 }
 
 close $output_fh;

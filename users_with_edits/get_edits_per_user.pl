@@ -59,7 +59,7 @@ sub print_all_users {
     my @form_data ;
     if (not $query_bots) {
        @form_data = [
-            groups => "all,bureaucrat,rollback,sysop,threadmoderator,authenticated,content-reviewer,council,fandom-editor,global-discussions-moderator,helper,restricted-login,restricted-login-exempt,reviewer,staff,util,vanguard,voldev,vstf,",
+            groups => "all,bot,bureaucrat,rollback,sysop,threadmoderator,authenticated,bot-global,content-reviewer,content-volunteer,council,fandom-editor,global-discussions-moderator,helper,restricted-login,restricted-login-exempt,reviewer,staff,util,vanguard,voldev,vstf,",
             username => "",
             edits => 0,
             limit => $limit,
@@ -118,6 +118,13 @@ sub print_all_users {
 
     my @user_edits = @$data;
     foreach (@user_edits) {
+        # filter out bots in case we aren't querying bots:
+        if (not $query_bots and @$_[1] =~ /bot/i) {
+            #~ say 'Bot found!!';
+            #~ say @$_;
+            next;
+        }
+
         $dirty_edits = @$_[2];
         my $edits = $hs->parse( $dirty_edits );
         $hs->eof;
@@ -139,9 +146,10 @@ sub print_all_users {
 
 sub extract_edits_and_print {
     my ($url) = @_;
+    my $loop;
 
     # printing edits per human user using Special:ListUsers page
-    my $loop = 0;
+    $loop = 0;
     do {
         if (print_all_users($loop, $url, 0) < 0) {
             print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';
@@ -156,7 +164,7 @@ sub extract_edits_and_print {
     print $output_fh ("; ");
 
     # printing edits per bot user using Special:ListUsers page
-    my $loop = 0;
+    $loop = 0;
     do {
         if (print_all_users($loop, $url, 1) < 0) {
             print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';

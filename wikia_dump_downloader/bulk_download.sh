@@ -16,6 +16,9 @@ for wiki in $wikis; do
 	else
 		echo "Error when downloading dump for $wiki. Skipping..."
 	fi
+	rm -r data/processed/$wiki/parts
+	python3 ../dump_parser/dump_parser.py data/processed/$wiki/full/$wiki.xml
+	rm data/processed/$wiki/full/$wiki.xml
 done
 
 echo "Done with $wiki_index_file"

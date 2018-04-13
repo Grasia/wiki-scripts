@@ -15,6 +15,8 @@ for wiki in $wikis; do
 		sh join_xml_parts.sh $wiki
 	else
 		echo "Error when downloading dump for $wiki. Skipping..."
+		echo $wiki >> skipped.txt
+		rm data/$wiki*.xml
 	fi
 	rm -r data/processed/$wiki/parts
 	python3 ../dump_parser/dump_parser.py data/processed/$wiki/full/$wiki.xml

@@ -13,14 +13,14 @@ for wiki in $wikis; do
 	if [ $? -eq 0 ]; then
 		echo "Joining all data parts into one xml file for $wiki..."
 		sh join_xml_parts.sh $wiki
+		rm -r data/processed/$wiki/parts
+		python3 ../dump_parser/dump_parser.py data/processed/$wiki/full/$wiki.xml
+		rm data/processed/$wiki/full/$wiki.xml
 	else
 		echo "Error when downloading dump for $wiki. Skipping..."
 		echo $wiki >> skipped.txt
 		rm data/$wiki*.xml
 	fi
-	rm -r data/processed/$wiki/parts
-	python3 ../dump_parser/dump_parser.py data/processed/$wiki/full/$wiki.xml
-	rm data/processed/$wiki/full/$wiki.xml
 done
 
 echo "Done with $wiki_index_file"

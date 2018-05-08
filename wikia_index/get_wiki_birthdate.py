@@ -14,6 +14,7 @@ The result is a csv file with the following columns:
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
+import time
 
 suffix = "?dir=prev&action=history"
 wikiaIndex = '20180220-wikiaIndex.txt'
@@ -87,5 +88,9 @@ for i in range(0, lenght-1):
         dfDates.columns = ['URL', "date", "state"]
         dfDates.to_csv('{}-{}.csv'.format(output_filename,i), index=False)
 
-
+# Save the complete file
+dfDates = pd.DataFrame(dates)
+dfDates.columns = ['URL', "date", "state"]
+timestr = time.strftime("%Y%m%d")
+dfDates.to_csv('{}-{}.csv'.format(timestr,output_filename), index=False)
 

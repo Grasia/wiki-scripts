@@ -1,4 +1,4 @@
-output_csv="wikia_ages.csv"
+output_csv="wikia_birthdate.csv"
 csv_list=$(ls -1b *.csv)
 
 

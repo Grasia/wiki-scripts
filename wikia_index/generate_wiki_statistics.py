@@ -1,57 +1,94 @@
-from bs4 import BeautifulSoup
+"""
+Extract the main stats of the wikis in Wikia requesting the Wikia API (http://www.wikia.com/api/v1)
+The requests use the url and the ByString endpoint and it returns a JSON object
+with the stats of the wiki. Some URLs in the Wikia Index fail when requesting the API.
+
+After gathering API stats, the JSON objects are flattened (some stats are prefixed with "stats." 
+because they are inside a "stats" object in the original JSON object) and some 
+information (like the description, information related with images and top users) 
+is removed. Additionally, the number of nonarticles is computed using 
+stats.articles (the number of content pages) and stats.pages (the total number of pages contained in the wiki)
+
+Finally, the stats are stored in a CSV file with the following columns:
+- 'domain'
+- 'headline'
+- 'hub'
+- 'id'
+- 'lang'
+- 'language'
+- 'name'
+- 'stats.activeUsers'
+- 'stats.admins'
+- 'stats.articles'
+- 'stats.discussions'
+- 'stats.edits'
+- 'stats.images'
+- 'stats.pages'
+- 'stats.users'
+- 'stats.videos'
+- 'title'
+- 'topic'
+- 'url'
+- 'wam_score'
+- 'stats.nonarticles'
+"""
+
 import requests
+import json
+import time
+from pandas.io.json import json_normalize
+    
+url = 'http://www.wikia.com/api/v1/Wikis/ByString?expand=1&limit=25&batch=1&includeDomain=true&string='
 
-sample_url = "http://clashofclans.wikia.com/wiki/Special:Statistics"
+def requestStats(link):
+    """Request the stats of a wiki characterized by its url
 
-rowSelector = "tr.mw-statistics-"
-stats = ['articles','pages','files','edits','edits-average','users','users-active']
-groupStats = ['bot', 'sysop']
-wikiaIndex = '20180220-wikiaIndex.txt'
-
-with open(wikiaIndex) as f:
-    links = [line.strip() for line in f]
-
-def procesaURL(url, data):
-    # Realizamos la petición a la web
-    req = requests.get(url)
-
-    # Comprobamos que la petición nos devuelve un Status Code = 200
+    Keyword arguments:
+    link -- url of the wiki involved in the request
+    
+    Return:
+    An object with the stats of the wiki or None
+    """
+    req = requests.get(url+link)
     statusCode = req.status_code
     if statusCode == 200:
-
-        # Pasamos el contenido HTML de la web a un objeto BeautifulSoup()
-        html = BeautifulSoup(req.text,"lxml")
-        name = html.select_one('div.wds-community-header__sitename a').text
-
-        result = [name,url]
-        for stat in stats:
-            row = html.select_one(rowSelector+stat+" td.mw-statistics-numbers")
-            text = row.text.replace(',','')
-            if '.' not in text:
-                value = int(text)
-            else:
-                value = float(text)
-            result.append(value)
-
-        for stat in groupStats:
-            row = html.select_one('tr.statistics-group-'+stat+" td.mw-statistics-numbers")
-            text = row.text
-            value = int(text)
-            result.append(value)
-
-        data.append(result)
-        return data
+        o = json.loads(req.text)
+        if (len(o['items'])==1):
+            return o['items'][0]
+        else:
+            return None
     else:
         print (statusCode)
+        return None
 
-procesaURL(sample_url, [])
 
-data = []
+wikia = []
 i=0
+output_filename = "wikia_stats"
+
+# Read the wikia index file
+with open('20180220-wikiaIndex.txt') as f:
+    links = [line.strip() for line in f]
+
+# Repeat for every URL (it takes about 1500ms per query, so take it easy)
 for link in links:
-    procesaURL(link+"wiki/Special:Statistics", data)
+    data = requestStats(link)
+    if (data is None):
+        print ("Error processing link: {} ({})".format(i,link))
+    else:
+        wikia.append(data)
+        i+=1
 
-import pandas as pd
 
-df = pd.DataFrame(data=data, columns=['name','url']+stats+groupStats)
-df.to_csv('wikia_statistics.csv')
+# Load the stats using json_normalize in order to flatten the objects
+df = json_normalize(wikia)
+
+# Remove unnecessary columns
+df.drop(columns=['desc','flags', 'image', 'original_dimensions.height','original_dimensions.width', 'topUsers', 'wordmark'], inplace=True)
+
+# Compute nonarticles 
+df['stats.nonarticles'] = df['stats.pages']-df['stats.articles']   
+
+# Save to CSV
+timestr = time.strftime("%Y%m%d")
+df.to_csv('{}-{}.csv'.format(timestr,output_filename), index=False)

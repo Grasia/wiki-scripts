@@ -33,7 +33,7 @@ my @users_by_contributions = ('', '', '', '', '', '');
 
 # csv variables
 my $output_filename = 'wikia_users.csv';
-my $urls_filename = '20180220-wikiaIndex.txt';
+my $urls_filename = '20180220-wikia_index.txt';
 my $csv_columns = 'url, users_1, users_5, users_10, users_20, users_50, users_100, bots';
 
 # output filehandlers

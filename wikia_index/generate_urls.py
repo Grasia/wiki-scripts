@@ -64,6 +64,6 @@ links = list(set(links))
 # Save the index on a TXT file.
 # Each line contains the URL of a Wikia site
 timestr = time.strftime("%Y%m%d")
-with open(timestr+'-wikiaIndex.txt','w') as thefile:
+with open(timestr+'-wikia_index.txt','w') as thefile:
     for item in links:
         thefile.write("%s\n" % item)

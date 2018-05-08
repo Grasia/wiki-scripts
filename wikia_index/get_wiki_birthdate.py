@@ -17,7 +17,7 @@ import pandas as pd
 import time
 
 suffix = "?dir=prev&action=history"
-wikiaIndex = '20180220-wikiaIndex.txt'
+wikiaIndex = '20180220-wikia_index.txt'
 output_filename = 'wikia_birthdate'
 
 url = sample_url+suffix

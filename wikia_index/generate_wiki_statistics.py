@@ -67,7 +67,7 @@ i=0
 output_filename = "wikia_stats"
 
 # Read the wikia index file
-with open('20180220-wikiaIndex.txt') as f:
+with open('20180220-wikia_index.txt') as f:
     links = [line.strip() for line in f]
 
 # Repeat for every URL (it takes about 1500ms per query, so take it easy)

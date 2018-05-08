@@ -17,7 +17,7 @@ import pandas as pd
 
 suffix = "?dir=prev&action=history"
 wikiaIndex = '20180220-wikiaIndex.txt'
-output_filename = 'wikia_ages'
+output_filename = 'wikia_birthdate'
 
 url = sample_url+suffix
 
@@ -85,7 +85,7 @@ for i in range(0, lenght-1):
         # Save every 20000 urls to avoid losing work if the script fails.
         dfDates = pd.DataFrame(dates)
         dfDates.columns = ['URL', "date", "state"]
-        dfDates.to_csv('{}-{}.txt'.format(output_filename,i), index=False)
+        dfDates.to_csv('{}-{}.csv'.format(output_filename,i), index=False)
 
 
 

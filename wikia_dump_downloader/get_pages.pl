@@ -18,8 +18,15 @@ if (@ARGV < 1) {
 #my $language = 'en.';
 #my $language = '';
 #my $wiki = 'marvel.wikia.com';
-my $api_url = 'http://'.$wiki.'/api.php';
-my $export_url = 'http://'.$wiki.'/wiki/Special:Export';
+my $api_url;
+my $export_url;
+if ($wiki =~ /.*\.wikia\.com/) { # $api_url for wikia wikis
+        $api_url = "http://$wiki/api.php";
+        $export_url = "http://$wiki/wiki/Special:Export";
+} else {                         # $api_url for other mediawiki wikis
+        $api_url = "https://$wiki/w/api.php";
+        $export_url = "https://$wiki/wiki/Special:Export";
+}
 my $aplimit = 500; # number of page names in one API request; passed to the API; 500 for anon, 1000 for logged in bot
 my $pages_per_xml = 5000; # number of pages in one Special::Export request
 my $current_only = 0;   # 1 = pages_current, 0 = pages_full

@@ -1,4 +1,8 @@
-# Data folder
+# Data content
+
+Several scripts will store here some data files (in txt and CSV format).
+
+`index_creation` scripts will store some intermediate index files and the final `curated index`.
 
 `Data_aggregation` notebook will store here two CSV files:
 

@@ -3,10 +3,10 @@
 """
    dump_parser.py
 
-   Descp: Script to convert xml to a csv files with readable useful data
-   for pandas processing within wikichron app.
+   Script to convert xml to a csv files with readable useful data
+for pandas processing within wikichron app.
 
-   Copyright 2017 Abel 'Akronix' Serrano Juste <akronix5@gmail.com>
+   Copyright 2017-2018 Abel 'Akronix' Serrano Juste <akronix5@gmail.com>
 """
 
 import xml.parsers.expat

@@ -1,5 +1,7 @@
 # Wikia Index
 
+_You can find a repo with all the raw and processed data as well as the notebooks for its analysis in [kaggle](https://www.kaggle.com/abeserra/wikia-census/)._
+
 This folder includes the scripts for the extraction of Wikia information and a former analysis of the compiled data in February, 2018.
 
 The scripts, notebooks and data contained in this folder are organized according to the following process:

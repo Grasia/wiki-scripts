@@ -1,3 +1,2 @@
-*.csv*
-error.log*
-*.swp
+venv/
+/*/.ipynb_checkpoints/

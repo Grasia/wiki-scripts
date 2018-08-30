@@ -1,4 +1,4 @@
-# census
+# census (alternative method)
 
 ## Note
 *This was an alternative method to retrieve all the wikis hosted in Wikia using the MediaWiki api.php endpoint.

@@ -27,7 +27,7 @@ my $listUsers_post_endpoint = 'index.php?' . 'action=ajax&rs=ListusersAjax::axSh
 
 # file-related variables
 my $output_filename = 'wikia_edits-partk.csv';
-my $urls_filename = '20180220-wikiaIndex-partk.txt';
+my $urls_filename = '20180220-wikiaCuratedIndex-partk.txt';
 my $csv_columns = 'url; wiki_name; total_edits; edits_per_user; bots';
 
 # output filehandlers
@@ -117,6 +117,8 @@ sub print_all_users {
     my $data = $json_res->{'aaData'};
 
     my @user_edits = @$data;
+    my $first_element = 1;
+
     foreach (@user_edits) {
         # filter out bots in case we aren't querying bots:
         if (not $query_bots and @$_[1] =~ /bot/i) {
@@ -125,12 +127,22 @@ sub print_all_users {
             next;
         }
 
+
         $dirty_edits = @$_[2];
         my $edits = $hs->parse( $dirty_edits );
         $hs->eof;
-        print ("$edits, ");
-        print $output_fh ("$edits, ");
+        # First element of @user_edits without a trailing comma:
+        if ($first_element) {
+            print ("$edits");
+            print $output_fh ("$edits");
+            $first_element = 0;
+        } else {
+            print (", $edits");
+            print $output_fh (", $edits");
+        }
     }
+
+
 
     return 0;
 

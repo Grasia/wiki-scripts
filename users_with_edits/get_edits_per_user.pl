@@ -52,9 +52,12 @@ sub open_output_file {
 }
 
 
-# order of arguments = ($loop, $url, $query_bots)
+# order of arguments = ($loop, $url, $query_bots, $first_element)
+# first_elemnt is just to know if this is the first time this subroutine is
+# executed for a wiki, because in that case we don't want to print a comma
+# before the number
 sub print_all_users {
-    my ($loop, $url, $query_bots) = @_;
+    my ($loop, $url, $query_bots, $first_element) = @_;
     $offset = $limit * $loop;
     my @form_data ;
     if (not $query_bots) {
@@ -117,7 +120,6 @@ sub print_all_users {
     my $data = $json_res->{'aaData'};
 
     my @user_edits = @$data;
-    my $first_element = 1;
 
     foreach (@user_edits) {
         # filter out bots in case we aren't querying bots:
@@ -159,17 +161,22 @@ sub print_all_users {
 sub extract_edits_and_print {
     my ($url) = @_;
     my $loop;
+    my $first_element; # to do not print comma before the first element.
+
 
     # printing edits per human user using Special:ListUsers page
     $loop = 0;
+    $first_element = 1;
+
     do {
-        if (print_all_users($loop, $url, 0) < 0) {
+        if (print_all_users($loop, $url, 0, $first_element) < 0) {
             print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';
             print STDERR "--> Skipping from index <-- \n";
             print $output_fh ("-1; -1\n");
             return -1;
         }
         $loop++;
+        $first_element = 0;
     } while ($loop <= $users / $limit);
 
     print ("; ");
@@ -177,14 +184,17 @@ sub extract_edits_and_print {
 
     # printing edits per bot user using Special:ListUsers page
     $loop = 0;
+    $first_element = 1;
+
     do {
-        if (print_all_users($loop, $url, 1) < 0) {
+        if (print_all_users($loop, $url, 1, $first_element) < 0) {
             print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';
             print STDERR "--> Skipping from index <-- \n";
             print $output_fh ("-1\n");
             return -1;
         }
         $loop++;
+        $first_element = 0;
     } while ($loop <= $users / $limit);
 
 

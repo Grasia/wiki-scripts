@@ -100,6 +100,10 @@ sub print_all_users {
     }
 
     my $raw_users_content = $res->decoded_content();
+    if ($raw_users_content =~ /^ *$/) { # sometimes there is an empty row (?) that breaks the JSON decoder !!!
+        say STDERR "\n->Found an empty row. Skipping!!<-";
+        return 0;
+    }
     #~ say $res->decoded_content();
     my $json_res = decode_json($raw_users_content);
     #~ print Dumper($json_res);

@@ -317,6 +317,6 @@ foreach (@wikia_urls) {
     print $output_fh ("\n");
 }
 
-print "¡¡I AM DONE with $urls_filename!!";
+print "¡¡I AM DONE with $urls_filename!!\n";
 
 close $output_fh;

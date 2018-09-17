@@ -27,7 +27,7 @@ my $listUsers_post_endpoint = 'index.php?' . 'action=ajax&rs=ListusersAjax::axSh
 
 # file-related variables
 my $output_filename = 'wikia_edits-partk.csv';
-my $urls_filename = '20180220-wikia_CuratedIndex-partk.txt';
+my $urls_filename = '20180917-curatedIndex-partk.txt';
 my $csv_columns = 'url; wiki_name; total_edits; edits_per_user; bots';
 
 # output filehandlers

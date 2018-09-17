@@ -17,10 +17,8 @@ import pandas as pd
 import time
 
 suffix = "?dir=prev&action=history"
-wikiaIndex = '20180220-wikia_index.txt'
+wikiaIndex = '20180917-curatedIndex.txt'
 output_filename = 'wikia_birthdate'
-
-url = sample_url+suffix
 
 def requestDate(url):
     """Looks for the date of the firs edition of the landing page of a wiki.
@@ -64,7 +62,7 @@ def requestDate(url):
 
 
 # Load the wikia Index
-with open(wikiaIndex) as f:
+with open('../data/' + wikiaIndex) as f:
     links = [line.strip() for line in f]
 
 i=0
@@ -92,5 +90,5 @@ for i in range(0, lenght-1):
 dfDates = pd.DataFrame(dates)
 dfDates.columns = ['URL', "date", "state"]
 timestr = time.strftime("%Y%m%d")
-dfDates.to_csv('{}-{}.csv'.format(timestr,output_filename), index=False)
+dfDates.to_csv('../data/{}-{}.csv'.format(timestr,output_filename), index=False)
 

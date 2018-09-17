@@ -10,8 +10,10 @@ import time
 import pandas as pd
 
 
+with open('./20180913-wikia_index.txt') as f:
     links = [line.strip() for line in f]
 
+i=100000
 max = len(links)
 output_filename = "checked_index"
 newURLs = []

@@ -67,7 +67,7 @@ i=0
 output_filename = "wikia_stats"
 
 # Read the wikia index file
-with open('20180220-wikia_index.txt') as f:
+with open('../data/20180917-curatedIndex.txt') as f:
     links = [line.strip() for line in f]
 
 # Repeat for every URL (it takes about 1500ms per query, so take it easy)
@@ -91,4 +91,4 @@ df['stats.nonarticles'] = df['stats.pages']-df['stats.articles']
 
 # Save to CSV
 timestr = time.strftime("%Y%m%d")
-df.to_csv('{}-{}.csv'.format(timestr,output_filename), index=False)
+df.to_csv('../data/{}-{}.csv'.format(timestr,output_filename), index=False)

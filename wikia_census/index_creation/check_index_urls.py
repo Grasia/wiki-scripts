@@ -10,12 +10,11 @@ import time
 import pandas as pd
 
 
-with open('../data/20180220-wikiaIndex.txt') as f:
     links = [line.strip() for line in f]
 
-i=0
 max = len(links)
 output_filename = "checked_index"
+newURLs = []
 
 # Loop with i instead of iterator in order to retry the execution 
 # if network fails

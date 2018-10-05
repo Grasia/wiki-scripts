@@ -99,7 +99,10 @@ def xml_to_csv(filename):
     # print revision to revision output csv
     if tag == 'revision':
 
-      revision_row = [page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,bytes_var]
+      revision_row = [page_id, page_title, page_ns,
+                      revision_id, timestamp,
+                      contributor_id,contributor_name,
+                      bytes_var]
 
       # Do not print (skip) revisions that has any of the fields not available
       if not has_empty_field(revision_row):

@@ -131,7 +131,7 @@ def xml_to_csv(filename):
   parser.buffer_size = 1024
 
   # writing header for output csv file
-  output_csv = open(filename[0:-3]+"csv",'w')
+  output_csv = open(filename[0:-3]+"csv",'w', encoding='utf8')
   output_csv.write(";".join(["page_id","page_title","page_ns","revision_id","timestamp","contributor_id","contributor_name","bytes"]))
   output_csv.write("\n")
 

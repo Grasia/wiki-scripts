@@ -14,6 +14,7 @@ use LWP::ConnCache;
 use Data::Dumper;
 use HTTP::Status qw(:constants :is status_message);
 use IO::Handle;
+use TryCatch;
 
 my $br = LWP::UserAgent->new;
 $br->timeout(45);
@@ -34,20 +35,23 @@ my @users_by_contributions = ('', '', '', '', '', '');
 # csv variables
 my $output_filename = '../data/wikia_users.csv';
 my $urls_filename = '../data/20180917-curatedIndex.txt';
+my $skipped_wikis_filename = '../data/skipped.txt';
 my $csv_columns = 'url, users_1, users_5, users_10, users_20, users_50, users_100, bots';
 
 # output filehandlers
 my $csv_fh;
+my $skipped_wikis_fh;
 
 # one argument: ($filename) => the file name for the file to create and open
 sub open_output_file {
-    my ($filename) = @_;
+    my ($filename, $write_header) = @_;
+    $write_header = $write_header //  1; # defaults to true if param not provided
     my $encoding = ":encoding(UTF-8)";
     my $filehandle = undef;
     my $create_if_not_exists = not -e $filename;
     open ($filehandle, " >> $encoding", $filename) or die "Error trying to write on $filename: $!\n";
     autoflush $filehandle 1;
-    print $filehandle "$csv_columns\n" if $create_if_not_exists;
+    print $filehandle "$csv_columns\n" if $create_if_not_exists and $write_header;
     return $filehandle;
 }
 
@@ -228,6 +232,10 @@ chomp(@wikia_urls);
 # creating CSV files handler for writing
 $csv_fh = open_output_file($output_filename);
 
+# For storing wikis that had to be skipped:
+$skipped_wikis_fh = open_output_file($skipped_wikis_filename, 0);
+
+
 # Iterating over ids
 foreach (@wikia_urls) {
 
@@ -249,8 +257,15 @@ foreach (@wikia_urls) {
         next;
     }
 
-    # Getting users using Special:ListUsers page
-    extract_users_by_contributions();
+    try {
+        # Getting users using Special:ListUsers page
+        extract_users_by_contributions();
+    } catch {
+        warn "Found fatal error: $_ when retrieving data for wiki: $wiki_url\n" .
+                "Saving wiki url into \"$skipped_wikis_filename\" and skipping...";
+        print $skipped_wikis_fh "$wiki_url\n";
+        next;
+    }
 
 
     # Info retrieved, printing:

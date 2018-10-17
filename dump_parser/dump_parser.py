@@ -4,7 +4,7 @@
    dump_parser.py
 
    Script to convert xml to a csv files with readable useful data
-for pandas processing within wikichron app.
+for pandas processing.
 
    Copyright 2017-2018 Abel 'Akronix' Serrano Juste <akronix5@gmail.com>
 """
@@ -14,15 +14,7 @@ import sys
 
 Debug = False
 
-
-def has_empty_field(l):
-  field_empty = False;
-  i = 0
-  while (not field_empty and i<len(l)):
-    field_empty = (l[i] == '');
-    i = i + 1
-  return field_empty
-
+__version__ = '1.0.0'
 
 def xml_to_csv(filename):
 
@@ -87,6 +79,16 @@ def xml_to_csv(filename):
   def end_tag(tag):
     nonlocal output_csv, _current_tag, _parent
     nonlocal page_id,page_title,page_ns,revision_id,timestamp,contributor_id,contributor_name,bytes_var
+
+
+    def has_empty_field(l):
+      field_empty = False;
+      i = 0
+      while (not field_empty and i<len(l)):
+        field_empty = (l[i] == '');
+        i = i + 1
+      return field_empty
+
 
     # uploading one level of parent if any of these tags close
     if tag == 'page':

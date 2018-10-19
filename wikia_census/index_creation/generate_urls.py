@@ -1,6 +1,6 @@
 """
 Extract URLs from Wikia Global sitemap.
-The sitemap is a three-level sparse index with the URLs 
+The sitemap is a three-level sparse index with the URLs
 of all the hosted wikis, sorted in alphabetical order.
 
 URLs are saved to a TXT file. Each line contains the URL of a Wikia site
@@ -22,6 +22,9 @@ def createIndex(url, data):
     data -- list with the urls extracted up to now
     """
 
+    def remove_trailing_slash(url):
+        return url[:-1] if url[-1:] == '/' else url
+
     # Request
     req = requests.get(url)
 
@@ -40,12 +43,13 @@ def createIndex(url, data):
                 href = link['href']
                 if '/Sitemap?level=' in href:
                     createIndex(baseURL+href, data)
-        
+
         # Leaf node: contains the URLs of wikia sites
         else:
             links = html.select("a.title")
             for link in links:
                 href = link['href']
+                href = remove_trailing_slash(href)
                 data.append(href)
     else:
         print (statusCode)
@@ -60,7 +64,7 @@ createIndex(url, links)
 # The index contains duplicated URLs, so the index must be cleaned before saving it.
 links = list(set(links))
 
- 
+
 # Save the index on a TXT file.
 # Each line contains the URL of a Wikia site
 timestr = time.strftime("%Y%m%d")

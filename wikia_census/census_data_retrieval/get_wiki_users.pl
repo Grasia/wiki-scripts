@@ -36,7 +36,7 @@ my @users_by_contributions = ('', '', '', '', '', '');
 my $output_filename = '../data/wikia_users.csv';
 my $urls_filename = '../data/20180917-curatedIndex.txt';
 my $skipped_wikis_filename = '../data/skipped.txt';
-my $csv_columns = 'url, users_1, users_5, users_10, users_20, users_50, users_100, bots';
+my $csv_columns = 'url,users_1,users_5,users_10,users_20,users_50,users_100,bots';
 
 # output filehandlers
 my $csv_fh;
@@ -164,7 +164,7 @@ sub print_wiki_to_csv {
     my ($fh, $filename) = @_;
 
     say "\n ---> Printing info for wiki $wiki_url into $filename .....";
-    print $fh "\"$wiki_url\", $users_by_contributions[0], $users_by_contributions[1], $users_by_contributions[2], $users_by_contributions[3], $users_by_contributions[4], $users_by_contributions[5], $bot_users\n";
+    print $fh "\"$wiki_url\",$users_by_contributions[0],$users_by_contributions[1],$users_by_contributions[2],$users_by_contributions[3],$users_by_contributions[4],$users_by_contributions[5],$bot_users\n";
 
 }
 

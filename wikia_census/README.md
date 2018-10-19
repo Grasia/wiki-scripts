@@ -13,9 +13,11 @@ The scripts, notebooks and data contained in this folder are organized according
     - Wiki Birth date (`get_wiki_birthdate.py`): Scrapping of the wiki *Main* page history in order to estimate its birthdate.
     - Wiki users (`get_wiki_users.pl`): Scrapping of *Special:ListUsers* page to retrieve the *actual* number of users of each wiki.
 
-2. The information is aggregated using the `data_aggregation.ipynb` Python notebook file. The execution of this script will generate two CSV files in the `data` folder:
+2. The information is aggregated using the `data_aggregation.py` Python script. The execution of this script will generate two CSV files in the `data` folder:
 
     - wikia_stats_users.csv
     - wikia_stats_users_birthdate.csv
+
+    You can see what this script is actually doing more visually using the notebook version: `data_aggregation.ipynb`.
 
 3. We performed two different analysis of the Wikia dataset. Both analysis are stored in the `analysis` folder.

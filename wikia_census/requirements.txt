@@ -12,7 +12,6 @@ lxml==4.2.5
 nbformat==4.4.0
 numpy==1.15.2
 pandas==0.23.4
-pkg-resources==0.0.0
 plotly==3.3.0
 python-dateutil==2.7.3
 pytz==2018.5

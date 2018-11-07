@@ -9,6 +9,7 @@ use Data::Dumper;
 use HTTP::Status qw(:constants :is status_message);
 use IO::Handle;
 use HTML::Strip;
+use TryCatch;
 
 my $hs = HTML::Strip->new();
 
@@ -27,8 +28,12 @@ my $listUsers_post_endpoint = 'index.php?' . 'action=ajax&rs=ListusersAjax::axSh
 
 # file-related variables
 my $output_filename = 'wikia_edits-partk.csv';
+#my $urls_filename = 'wikiaIndex-test.txt';
 my $urls_filename = '20180917-curatedIndex-partk.txt';
 my $csv_columns = 'url; wiki_name; total_edits; edits_per_user; bots';
+
+# output messages
+my $skipped_error_message = "--> Saving row as \"-1; -1; -1; -1\" <--";
 
 # output filehandlers
 my $output_fh;
@@ -290,7 +295,7 @@ foreach (@wikia_urls) {
     $listUsers_url = $wiki_url . $listUsers_post_endpoint;
     my $wiki_url_status = is_wiki_url_ok($wiki_url, $listUsers_url);
     if ($wiki_url_status < 0) {
-        print STDERR "--> Skipping from index <-- \n";
+        print STDERR $skipped_error_message . "\n";
         print $output_fh ("-1; -1; -1; -1\n");
         next;
     }
@@ -300,11 +305,21 @@ foreach (@wikia_urls) {
     my $res = $br->get($api_request);
 
     if (not $res->is_success) {
-        print STDERR "--> Skipping from index <-- \n";
+        print STDERR $skipped_error_message . "\n";
         print $output_fh ("-1; -1; -1; -1\n");
         next;
     }
-    my $json_res = decode_json($res->decoded_content);
+    my $json_res;
+    try { # There are some edge cases where the wiki has been moved or deleted but is difficult to find the pattern
+          # With this Try...Catch we skip the ultimate wikis which we couldn't extract the data for some reason
+          # This prevents that the scripts get stopped because of these few edge cases
+        $json_res = decode_json($res->decoded_content);
+    } catch {
+        print STDERR "Found fatal error: $_ when retrieving data for wiki: $wiki_url\n" .
+            $skipped_error_message . "\n";
+        print $output_fh ("-1; -1; -1; -1\n");
+        next;
+    }
     #~ print Dumper($json_res);
     $wiki_edits = $json_res->{'query'}->{'statistics'}->{'edits'};
     $wiki_name = $json_res->{'query'}->{'general'}->{'sitename'};

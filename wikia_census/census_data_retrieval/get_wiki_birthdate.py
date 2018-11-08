@@ -3,7 +3,7 @@ Estimation of the birth date of a wiki in Wikia.
 We suppose that the first page created is the wiki landing page.
 We look for the date of the first edition in the history of the landing page.
 Wikia index contains url from wikis that are not longer available or deleted
-so this script also store these facts. 
+so this script also store these facts.
 
 The result is a csv file with the following columns:
 - The URL of the wiki landing page
@@ -27,7 +27,7 @@ def requestDate(url):
 
     Keyword arguments:
     url -- url of the index page processed
-    
+
     Return:
     date: Estimated date or empty string
     state: AVAILABLE, NOT-AVAILABLE, DELETED
@@ -52,10 +52,10 @@ def requestDate(url):
             # Looks for a message that informs that the page was deleted
             warning = html.select_one(".mw-warning-with-logexcerpt p")
             if ("deleted" in warning.text):
-                state = "DELETED"  
+                state = "DELETED"
         finally:
             return date,state
-            
+
     else:
         # The url was not available. Return an empty date and NOT-AVAILABLE
         return date,state

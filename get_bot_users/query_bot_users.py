@@ -44,7 +44,7 @@ def main():
             Syntax: python3 query_bot_users url1 [url2, url3,...]""";
 
    if(len(sys.argv)) >= 2:
-      if sys.argv[0] == 'help':
+      if sys.argv[1] == 'help':
          print(help);
          exit(0)
 

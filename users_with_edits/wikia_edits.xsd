@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <xs:annotation>
+    <xs:appinfo>User with edits data in a XML file</xs:appinfo>
+    <xs:documentation xml:lang="en">
+    This Schema defines the structure of every user of all wikis in Wikia and its correspoding number of edits for each wiki, along with other interesting data.
+    Keep in mind that wikis can be deleted or the Special:ListUsers data can be inaccesible for some reason, in such case, the attribute error will be true and the content of the &lt;wiki&gt; element will be empty.
+    </xs:documentation>
+  </xs:annotation>
+
+
+<!-- Type definitions -->
+
+  <xs:simpleType name="gendertype">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="male"/>
+      <xs:enumeration value="female"/>
+      <xs:enumeration value="unknown"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="usergroupstype">
+    <xs:sequence>
+      <xs:element name="g" type="xs:string" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="usertype">
+    <xs:sequence>
+      <xs:element name="edits" type="xs:nonNegativeInteger"/>
+      <xs:element name="groups" type="usergroupstype"/>
+    </xs:sequence>
+    <xs:attribute name="userid" type="xs:positiveInteger"/>
+    <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="gender" type="gendertype"/>
+    <xs:attribute name="registration" type="xs:dateTime"/>
+  </xs:complexType>
+
+  <xs:complexType name="userlist">
+    <xs:sequence>
+      <xs:element name="user" type="usertype" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <xs:complexType name="wikitype">
+    <xs:sequence>
+      <xs:element name="total_users" type="xs:nonNegativeInteger" minOccurs="0" />
+      <xs:element name="total_edits" type="xs:nonNegativeInteger" minOccurs="0" />
+      <xs:element name="edits_per_user" type="userlist" minOccurs="0" />
+      <xs:element name="edits_per_bot" type="userlist" minOccurs="0" />
+    </xs:sequence>
+    <xs:attribute name="url" type="xs:anyURI" use="required"/>
+    <xs:attribute name="error" type="xs:boolean" use="required"/>
+    <xs:attribute name="wiki_name" type="xs:normalizedString" />
+  </xs:complexType>
+
+
+<!-- Element definitions -->
+  <xs:element name="wikis">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="wiki" type="wikitype" maxOccurs="unbounded" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

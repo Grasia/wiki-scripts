@@ -1,4 +1,4 @@
-# wikia_dump_downloader
+# wiki_dump_downloader
 Download all the revisions history of a Mediawiki wiki via the API and the Special:Export endpoint.
 
 Note that large wikis can take a lot of time to get all the pages and download its whole history.
@@ -33,13 +33,13 @@ It needs an input text file listing, one per line, all the canonical urls of the
 
 `wikis_to_download.txt file:`
 ```
-lab-rats.wikia.com 
-dragcave.wikia.com 
-es.clubpenguin.wikia.com 
-es.thewalkingdead.wikia.com 
-althistory.wikia.com 
-nerf.wikia.com 
-fr.lgdc.wikia.com 
+lab-rats.wikia.com
+dragcave.wikia.com
+es.clubpenguin.wikia.com
+es.thewalkingdead.wikia.com
+althistory.wikia.com
+nerf.wikia.com
+fr.lgdc.wikia.com
 familyguy.wikia.com
 ```
 Following the example above, you'd run the script with: `sh bulk_download.sh wikis_to_download.txt`
@@ -47,3 +47,10 @@ Following the example above, you'd run the script with: `sh bulk_download.sh wik
 As a result, it will leave the processed history csv file in the full/ directory of every wiki. It will also remove the parts and full xml files in order to not fill up all your disk space. Finally, if any error arises at any step when collecting and processsing wiki data, the script will add its url to the skipped.txt file and go on to the next one.
 
 The script is pretty simple, so feel free to modify it to suit your needs.
+
+# Domains tested
+Domains tested so far:
+- *.wikia.com
+- *.gamepedia.com
+- *.wiktionary.org
+- nomadwiki.org/lang/

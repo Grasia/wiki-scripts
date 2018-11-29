@@ -1,9 +1,39 @@
 #!/bin/perl
 
+
+#####  Perl built-in usages #####
 use utf8;
 use warnings;
 use strict;
 
+
+#####  External libs #####
+use Time::HiRes qw[time];
+use LWP::UserAgent;
+use LWP::ConnCache;
+use HTTP::Request::Common;
+use HTTP::Cookies;
+use URI::Escape qw[uri_escape_utf8];
+use HTML::Entities qw[decode_entities];
+use JSON;
+
+
+#####  Global vars #####
+
+# output dir
+my $output_dir = 'data/'; # output directory where to store the data extracted. Important to end it with a slash (/)
+mkdir $output_dir unless -d $output_dir;
+
+
+# Browser agent
+my $br = LWP::UserAgent->new;
+$br->conn_cache(LWP::ConnCache->new());
+$br->agent("ma_dump/1.2");
+$br->requests_redirectable(['POST', 'HEAD', 'GET']);
+# saving cookies file
+$br->cookie_jar(HTTP::Cookies->new(file => $output_dir . "cookies.txt", autosave => 1, ignore_discard => 1));
+
+# get wiki url from user
 my $wiki;
 # Define wiki to download
 if (@ARGV < 1) {
@@ -14,45 +44,81 @@ if (@ARGV < 1) {
         $wiki = $ARGV[0];
 }
 
+# Make sure url has a http heading
+my $wiki_url;
+
+
+if ( not $wiki =~ /^https?/ ) {
+        $wiki_url = 'http://' . $wiki;
+} else {
+        $wiki_url = $wiki;
+}
+
+my @possible_api_endpoints = ('/api.php', '/w/api.php');
+my @possible_export_endpoints = ('/wiki/Special:Export', '/Special:Export');
+
+
+#####  Function definitions #####
+
+# From a given url, tries to find the api and export endpoint.
+# @input: wiki url
+# @output: ($api_url, $export_url) or an error otherwise
+sub endpoints_probing {
+        my ($wiki_url) = @_;
+
+        # Probing for api endpoint:
+        my $api_url;
+        my $found = 0;
+        foreach (@possible_api_endpoints) {
+                $api_url = $wiki_url . $_;
+                my $res = $br->head($api_url);
+                if ($res->is_success) {
+                        $found = 1;
+                        $api_url = $res->request()->uri();
+                        last;
+                }
+        }
+
+        unless ($found) { die ("Failed to find api endpoint for $wiki_url.") };
+
+        # Probing for Special:Export endpoint:
+        my $export_url;
+        $found = 0;
+        foreach (@possible_export_endpoints) {
+                $export_url = $wiki_url . $_;
+                my $res = $br->head($export_url);
+                if ($res->is_success) {
+                        $found = 1;
+                        $export_url = $res->request()->uri();
+                        last;
+                }
+        }
+
+        unless ($found) { die ("Failed to find Special:Export endpoint for $wiki_url.") };
+
+        return ($api_url, $export_url)
+}
+
+
+#####  Begin logic #####
 
 #my $language = 'en.';
 #my $language = '';
 #my $wiki = 'marvel.wikia.com';
 my $api_url;
 my $export_url;
-if ($wiki =~ /.*\.wikia\.com/) { # $api_url for wikia wikis
-        $api_url = "http://$wiki/api.php";
-        $export_url = "http://$wiki/wiki/Special:Export";
-} else {                         # $api_url for other mediawiki wikis
-        $api_url = "https://$wiki/w/api.php";
-        $export_url = "https://$wiki/wiki/Special:Export";
-}
+
+($api_url, $export_url) = endpoints_probing($wiki_url);
+print "Selected api url endpoint: $api_url\n";
+print "Selected Special:Export url endpoint: $export_url\n";
+
+# Download params
 my $aplimit = 500; # number of page names in one API request; passed to the API; 500 for anon, 1000 for logged in bot
 my $pages_per_xml = 5000; # number of pages in one Special::Export request
 my $current_only = 0;   # 1 = pages_current, 0 = pages_full
-my $output_dir = 'data/'; # output directory where to store the data extracted. Important to end it with a slash (/)
 
-use Time::HiRes qw[time];
-use LWP::UserAgent;
-use LWP::ConnCache;
-use HTTP::Request::Common;
-use HTTP::Cookies;
-use URI::Escape qw[uri_escape_utf8];
-use HTML::Entities qw[decode_entities];
-use JSON;
-
+# timing var
 my $stm = time;
-
-#####  Begin logic: #####
-
-print "Selected api url endpoint: $api_url\n";
-mkdir $output_dir unless -d $output_dir;
-
-# saving cookies file
-my $br = LWP::UserAgent->new;
-$br->conn_cache(LWP::ConnCache->new());
-$br->agent("ma_dump/1.2");
-$br->cookie_jar(HTTP::Cookies->new(file => $output_dir . "cookies.txt", autosave => 1, ignore_discard => 1));
 
 # Getting namespaces listing for this wiki
 #~ (Not being used yet)
@@ -82,17 +148,24 @@ foreach my $ns (@namespaces) {
                 my $url = $api_url . "?action=query&list=allpages&apnamespace=$ns&aplimit=$aplimit&format=xml" .
                         ( $apfrom ? "&apfrom=$apfrom" : '' );
 
-                undef $apfrom;
                 my $res = $br->get($url);
                 if ($res->is_success) {
                         push @pages, $res->decoded_content =~ m#<p pageid="\d+" ns="\d+" title="(.*?)" />#g;
-                        ($apfrom) = $res->decoded_content =~ m#<allpages apfrom="(.*?)" />#;
+
+                        # look for next apfrom param (in case there is).
+                        ($apfrom) = $res->decoded_content =~ m#<allpages apfrom="(.*?)" />#; # Wikia and many other mediawiki wikis
+                        if (not defined $apfrom) {
+                                ($apfrom) = $res->decoded_content =~ m#<continue apcontinue="(.*?)" continue=".*" />#; # gamepedia wikis
+                        } else {
+                                undef $apfrom;
+                        }
+
                 } else {
                         die $res->status_line." on $url";
                 }
 
         } while defined $apfrom;
-        print "Done with {{ns:$ns}}, now have ",scalar @pages," page(s).\n";
+        printf "Done with {{ns:$ns}}, now have %d page(s).\n", scalar @pages;
 }
 
 printf "%d page(s) to fetch, %d at a time, %d part(s) expected...\n", scalar @pages, $pages_per_xml, map( int( /^\d+$/ ? $_ : $_+1 ), @pages / $pages_per_xml );
@@ -105,6 +178,8 @@ delete $export_parms{curonly} unless $current_only;
 
 my $wiki_fn = $wiki;
 $wiki_fn =~ s~[^\w\.\-]~_~g;
+
+print "Starting to download wiki dump in chunks...\n";
 
 # getting pages in chunks
 my $part = 0;

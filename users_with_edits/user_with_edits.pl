@@ -167,7 +167,6 @@ sub print_all_users {
     if ($loop == 0) {
         if (not $query_bots) {
             $wiki->{'users'} = $users;
-            $wiki_users = $users;
             print_wiki();
             print $output_xml_fh "\t\t<edits_per_user>\n";
             say "Total users with edits equal or higher than 0 is: $users";
@@ -345,11 +344,11 @@ sub print_wiki {
 
     print Dumper($wiki);
 
-    print $output_xml_fh "\t<wiki url=\"$wiki_url\" error=\"$wiki->{'error'}\"";
-    print $output_xml_fh " wiki_name=\"$wiki_name\"" if (defined $wiki_name);
+    print $output_xml_fh "\t<wiki url=\"$wiki->{'url'}\" error=\"$wiki->{'error'}\"";
+    print $output_xml_fh " wiki_name=\"$wiki->{'name'}\"" if (defined $wiki->{'name'});
     print $output_xml_fh " >\n";
-    print $output_xml_fh "\t\t<total_edits>$wiki_edits</total_edits>\n" if (defined $wiki_edits);
-    print $output_xml_fh "\t\t<total_users>$wiki_users</total_users>\n" if (defined $wiki_users);
+    print $output_xml_fh "\t\t<total_edits>$wiki->{'edits'}</total_edits>\n" if (defined $wiki->{'edits'});
+    print $output_xml_fh "\t\t<total_users>$wiki->{'users'}</total_users>\n" if (defined $wiki->{'users'});
 
     #~ XMLout ($wiki, OutputFile => $output_xml_fh, KeyAttr => {"wiki"}, KeepRoot => 1);
 }
@@ -417,11 +416,9 @@ foreach (@wikia_urls) {
         next;
     }
     #~ print Dumper($json_res);
-    $wiki_edits = $json_res->{'query'}->{'statistics'}->{'edits'};
-    $wiki->{'edits'} = $wiki_edits;
-    $wiki_name = $json_res->{'query'}->{'general'}->{'sitename'};
-    $wiki->{'name'} = $wiki_name;
-    print $output_csv_fh ("\"$wiki_name\"; $wiki_edits; ");
+    $wiki->{'edits'} = $json_res->{'query'}->{'statistics'}->{'edits'};
+    $wiki->{'name'} = $json_res->{'query'}->{'general'}->{'sitename'};
+    print $output_csv_fh ("\"$wiki->{'name'}\"; $wiki->{'edits'}; ");
 
     # get editions per user
     extract_edits_and_print($listUsers_url);
@@ -431,10 +428,7 @@ foreach (@wikia_urls) {
 
 } continue {
     # Before next wikis, clean values for data variables
-    undef $wiki_url;
-    undef $wiki_name;
-    undef $wiki_edits;
-    undef $wiki_users;
+    undef $wiki;
 
     # Before next wiki, close wiki tag.
     print $output_xml_fh "\t</wiki>\n";

@@ -1,5 +1,6 @@
 use utf8;
 use feature 'say';
+#~ use strict;
 
 use Data::Dumper;
 use LWP::UserAgent;
@@ -10,6 +11,7 @@ use HTTP::Status qw(:constants :is status_message);
 use IO::Handle;
 use HTML::Strip;
 use TryCatch;
+#~ use XML::Simple qw(:strict);
 
 my $hs = HTML::Strip->new();
 
@@ -43,19 +45,64 @@ my $output_xml_fh;
 # number of users to get per request
 my $limit = 50;
 
+### Aux vars ###
+
 # aux var to store number of users in a wiki
 my $users;
+
+# aux hashref to store wiki data
+my $wiki;
+
 
 # one argument: ($filename) => the file name for the file to create and open
 sub open_output_file {
     my ($filename) = @_;
+    my ($type_of_output) = $filename =~ /\.([^.]+)$/; # get file extension
     my $encoding = ":encoding(UTF-8)";
     my $filehandle = undef;
-    my $create_if_not_exists = not -e $filename;
-    open ($filehandle, " >> $encoding", $filename) or die "Error trying to write on $filename: $!\n";
-    autoflush $filehandle 1;
-    print $filehandle "$csv_columns\n" if $create_if_not_exists;
+    my $file_already_sxists = -e $filename;
+    if ($file_already_sxists) {
+        die "Running this script would overwrite the contents of $filename. " .
+            "First remove those contents or save them somewhere else and run this script again.\n";
+    } else {
+        open ($filehandle, " >> $encoding", $filename) or die "Error trying to write on $filename: $!\n";
+        autoflush $filehandle 1;
+
+        if ($type_of_output eq 'csv') {
+            print $filehandle "$csv_columns\n";
+        } elsif ($type_of_output eq 'xml') {
+            print $filehandle "<?xml version=\"1.0\"?>\n";
+            print $filehandle "<wikis>\n";
+        } else {
+            die "output extension: $filename unrecognized. Please use .csv or .xml extensions.";
+        }
+    }
+
     return $filehandle;
+}
+
+
+# Get users' data for given usernames and print it in the output xml file.
+sub get_user_data_and_print {
+    my (@usernames) = @_;
+
+    # Retrieve users data from MediaWiki API
+    my $users_query = join('|', @usernames);
+    my $url = $wiki_url . "api.php?action=query&list=users&ususers=$users_query&usprop=groups|gender|registration|editcount&format=xml";
+    my $res = $br->get($url);
+    my $user_xml_data = $res->decoded_content();
+
+    # users data is in inside the <users> element response
+    my ($users_data) = $user_xml_data =~ /<users>(.*)<\/users>/;
+
+    # creates a list of <user> in order to print the xml more prettified.
+    @users_data_list = split( /<\/user>/, $users_data );
+
+    foreach (@users_data_list) {
+        # Note that We have to put back the closing </user>
+        #  we took out with the split function prior to print.
+        print $output_xml_fh ("\t\t\t$_</user>\n");
+    }
 }
 
 
@@ -119,8 +166,13 @@ sub print_all_users {
 
     if ($loop == 0) {
         if (not $query_bots) {
+            $wiki->{'users'} = $users;
+            $wiki_users = $users;
+            print_wiki();
+            print $output_xml_fh "\t\t<edits_per_user>\n";
             say "Total users with edits equal or higher than 0 is: $users";
         } else {
+            print $output_xml_fh "\t\t<edits_per_bot>\n";
             say "\nTotal bots with edits equal or higher than 0 is: $users";
         }
     }
@@ -131,6 +183,7 @@ sub print_all_users {
     my $data = $json_res->{'aaData'};
 
     my @user_edits = @$data;
+    my @usernames;
 
     foreach (@user_edits) {
         # filter out bots in case we aren't querying bots:
@@ -140,22 +193,28 @@ sub print_all_users {
             next;
         }
 
+        # Getting edit count only for .csv
 
         $dirty_edits = @$_[2];
         my $edits = $hs->parse( $dirty_edits );
         $hs->eof;
         # First element of @user_edits without a trailing comma:
         if ($first_element) {
-            print ("$edits");
+            #~ print ("$edits");
             print $output_csv_fh ("$edits");
             $first_element = 0;
         } else {
-            print (", $edits");
+            #~ print (", $edits");
             print $output_csv_fh (", $edits");
         }
+        # Extract all usernames for this ListUsers page:
+        my ($username) = @$_[0] =~ /href="\/wiki\/Special:Editcount\?username=(\S+)"/;
+        push (@usernames, $username);
     }
+        # Get userdata for all these users and print it in the output xml file.
+        get_user_data_and_print(@usernames);
 
-
+    #~ exit;
 
     return 0;
 
@@ -184,14 +243,16 @@ sub extract_edits_and_print {
             print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';
             print STDERR "--> Skipping from index <-- \n";
             print $output_csv_fh ("-1; -1\n");
+            print_wiki(1);
             return -1;
         }
         $loop++;
         $first_element = 0;
     } while ($loop <= $users / $limit);
 
-    print ("; ");
+    #~ print ("; ");
     print $output_csv_fh ("; ");
+    print $output_xml_fh "\t\t</edits_per_user>\n";
 
     # printing edits per bot user using Special:ListUsers page
     $loop = 0;
@@ -202,12 +263,14 @@ sub extract_edits_and_print {
             print STDERR $res->status_line.' when posting to Special:ListUsers querying for all users.\n';
             print STDERR "--> Skipping from index <-- \n";
             print $output_csv_fh ("-1\n");
+            print_wiki(1);
             return -1;
         }
         $loop++;
         $first_element = 0;
     } while ($loop <= $users / $limit);
 
+    print $output_xml_fh "\t\t</edits_per_bot>\n";
 
     return 0;
 }
@@ -249,12 +312,17 @@ sub is_wiki_url_ok {
             ];
 
         my $res = $br->post($listUsers_url, @form_data);
-            if (not $res->is_success) {
-                say STDERR $res->status_line ." when posting to $listUsers_url, for wiki $wiki_url";
-                return -4; # problem requesting ListUsers
-            }
+        if (not $res->is_success) {
+            say STDERR $res->status_line ." when posting to $listUsers_url, for wiki $wiki_url";
+            return -4; # problem requesting ListUsers
+        }
 
-            return 1; # return "wiki url is ok"
+        #~ my $json_res = decode_json($raw_users_content);
+        #~ $wikia_users = $json_res->{'iTotalDisplayRecords'};
+
+        #~ print Dumper($res);
+
+        return 1; # return "wiki url is ok"
 
     } elsif ($res->code == 404) {
         say STDERR "Error found checking wiki $wiki_url: " . $res->status_line;
@@ -266,6 +334,27 @@ sub is_wiki_url_ok {
 }
 
 
+sub print_wiki {
+    my ($error) = @_;
+    $error //= 0;
+    if ($error) {
+        $wiki->{'error'} = "true";
+    } else {
+        $wiki->{'error'} = "false";
+    }
+
+    print Dumper($wiki);
+
+    print $output_xml_fh "\t<wiki url=\"$wiki_url\" error=\"$wiki->{'error'}\"";
+    print $output_xml_fh " wiki_name=\"$wiki_name\"" if (defined $wiki_name);
+    print $output_xml_fh " >\n";
+    print $output_xml_fh "\t\t<total_edits>$wiki_edits</total_edits>\n" if (defined $wiki_edits);
+    print $output_xml_fh "\t\t<total_users>$wiki_users</total_users>\n" if (defined $wiki_users);
+
+    #~ XMLout ($wiki, OutputFile => $output_xml_fh, KeyAttr => {"wiki"}, KeepRoot => 1);
+}
+
+
 #### Starts main(): #####
 
 # get urls:
@@ -274,8 +363,9 @@ open URLS_FH, $urls_filename or die $!;
 @wikia_urls = <URLS_FH>;
 chomp(@wikia_urls);
 
-# creating CSV files handler for writing
+# creating output files handler for writing
 $output_csv_fh = open_output_file($output_csv_filename);
+$output_xml_fh = open_output_file($output_xml_filename);
 
 # Iterating over urls
 foreach (@wikia_urls) {
@@ -290,6 +380,7 @@ foreach (@wikia_urls) {
 
     # printing url
     print $output_csv_fh ("$wiki_url; ");
+    $wiki->{'url'} = $wiki_url;
 
     say ("Retrieving data for wiki: $wiki_url");
 
@@ -299,6 +390,7 @@ foreach (@wikia_urls) {
     if ($wiki_url_status < 0) {
         print STDERR $skipped_error_message . "\n";
         print $output_csv_fh ("-1; -1; -1; -1\n");
+        print_wiki(1);
         next;
     }
 
@@ -309,6 +401,7 @@ foreach (@wikia_urls) {
     if (not $res->is_success) {
         print STDERR $skipped_error_message . "\n";
         print $output_csv_fh ("-1; -1; -1; -1\n");
+        print_wiki(1);
         next;
     }
     my $json_res;
@@ -320,11 +413,14 @@ foreach (@wikia_urls) {
         print STDERR "Found fatal error: $_ when retrieving data for wiki: $wiki_url\n" .
             $skipped_error_message . "\n";
         print $output_csv_fh ("-1; -1; -1; -1\n");
+        print_wiki(1);
         next;
     }
     #~ print Dumper($json_res);
     $wiki_edits = $json_res->{'query'}->{'statistics'}->{'edits'};
+    $wiki->{'edits'} = $wiki_edits;
     $wiki_name = $json_res->{'query'}->{'general'}->{'sitename'};
+    $wiki->{'name'} = $wiki_name;
     print $output_csv_fh ("\"$wiki_name\"; $wiki_edits; ");
 
     # get editions per user
@@ -332,7 +428,19 @@ foreach (@wikia_urls) {
 
     print ("\n");
     print $output_csv_fh ("\n");
+
+} continue {
+    # Before next wikis, clean values for data variables
+    undef $wiki_url;
+    undef $wiki_name;
+    undef $wiki_edits;
+    undef $wiki_users;
+
+    # Before next wiki, close wiki tag.
+    print $output_xml_fh "\t</wiki>\n";
 }
+
+print $output_xml_fh "</wikis>\n";
 
 print "¡¡I AM DONE with $urls_filename!!\n";
 

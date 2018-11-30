@@ -6,19 +6,39 @@
     <xs:documentation xml:lang="en">
     This Schema defines the structure of every user of all wikis in Wikia and its correspoding number of edits for each wiki, along with other interesting data.
     Keep in mind that wikis can be deleted or the Special:ListUsers data can be inaccesible for some reason, in such case, the attribute error will be true and the content of the &lt;wiki&gt; element will be empty.
+    usertype is specially made to match the xml returned by the mediawiki api when querying users data.
+    gendertype has been made case insensitive.
+    registration can be of dateTime format or an empty string "".
     </xs:documentation>
   </xs:annotation>
 
 
-<!-- Type definitions -->
+<!-- Simple Type definitions -->
 
   <xs:simpleType name="gendertype">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="male"/>
-      <xs:enumeration value="female"/>
-      <xs:enumeration value="unknown"/>
+      <xs:pattern value="[Mm][Aa][Ll][Ee]"/>
+      <xs:pattern value="[Ff][Ee][Mm][Aa][Ll][Ee]"/>
+      <xs:pattern value="unknown"/>
     </xs:restriction>
   </xs:simpleType>
+
+
+  <xs:simpleType name="dateOrEmptytype">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:dateTime" />
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value=""></xs:enumeration>
+        </xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+
+
+<!-- Complex Type definitions -->
 
   <xs:complexType name="usergroupstype">
     <xs:sequence>
@@ -28,13 +48,13 @@
 
   <xs:complexType name="usertype">
     <xs:sequence>
-      <xs:element name="edits" type="xs:nonNegativeInteger"/>
       <xs:element name="groups" type="usergroupstype"/>
     </xs:sequence>
     <xs:attribute name="userid" type="xs:positiveInteger"/>
     <xs:attribute name="name" type="xs:string"/>
+    <xs:attribute name="editcount" type="xs:nonNegativeInteger"/>
+    <xs:attribute name="registration" type="dateOrEmptytype"/>
     <xs:attribute name="gender" type="gendertype"/>
-    <xs:attribute name="registration" type="xs:dateTime"/>
   </xs:complexType>
 
   <xs:complexType name="userlist">
@@ -46,8 +66,8 @@
 
   <xs:complexType name="wikitype">
     <xs:sequence>
-      <xs:element name="total_users" type="xs:nonNegativeInteger" minOccurs="0" />
       <xs:element name="total_edits" type="xs:nonNegativeInteger" minOccurs="0" />
+      <xs:element name="total_users" type="xs:nonNegativeInteger" minOccurs="0" />
       <xs:element name="edits_per_user" type="userlist" minOccurs="0" />
       <xs:element name="edits_per_bot" type="userlist" minOccurs="0" />
     </xs:sequence>
@@ -58,6 +78,7 @@
 
 
 <!-- Element definitions -->
+
   <xs:element name="wikis">
     <xs:complexType>
       <xs:sequence>

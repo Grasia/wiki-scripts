@@ -50,7 +50,7 @@ The script is pretty simple, so feel free to modify it to suit your needs.
 
 # Domains tested
 Domains tested so far:
-- *.wikia.com
-- *.gamepedia.com
-- *.wiktionary.org
-- nomadwiki.org/lang/
+- *.wikia.com :heavy_check_mark:
+- *.gamepedia.com :heavy_check_mark: -> Although it sometimes can return a `504 Gateway Time-out` error from Cloudfront
+- *.wiktionary.org :heavy_check_mark:
+- nomadwiki.org/lang/ :heavy_check_mark:

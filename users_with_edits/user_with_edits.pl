@@ -1,6 +1,6 @@
 use utf8;
 use feature 'say';
-#~ use strict;
+use strict;
 
 use Data::Dumper;
 use LWP::UserAgent;
@@ -45,7 +45,10 @@ my $output_xml_fh;
 # number of users to get per request
 my $limit = 50;
 
-### Aux vars ###
+### Aux global vars ###
+
+# Response result from browser
+my $res;
 
 # aux var to store number of users in a wiki
 my $users;
@@ -53,6 +56,13 @@ my $users;
 # aux hashref to store wiki data
 my $wiki;
 
+# var to store wiki url
+my $wiki_url;
+
+# store offset for next query
+my $offset;
+
+### Begin function definitions ###
 
 # one argument: ($filename) => the file name for the file to create and open
 sub open_output_file {
@@ -96,7 +106,7 @@ sub get_user_data_and_print {
     my ($users_data) = $user_xml_data =~ /<users>(.*)<\/users>/;
 
     # creates a list of <user> in order to print the xml more prettified.
-    @users_data_list = split( /<\/user>/, $users_data );
+    my @users_data_list = split( /<\/user>/, $users_data );
 
     foreach (@users_data_list) {
         # Note that We have to put back the closing </user>
@@ -194,7 +204,7 @@ sub print_all_users {
 
         # Getting edit count only for .csv
 
-        $dirty_edits = @$_[2];
+        my $dirty_edits = @$_[2];
         my $edits = $hs->parse( $dirty_edits );
         $hs->eof;
         # First element of @user_edits without a trailing comma:

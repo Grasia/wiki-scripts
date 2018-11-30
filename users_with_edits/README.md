@@ -1,9 +1,14 @@
-# users_with_edits script
+# users_with_edits scripts
 
 Generate data of edits per user for every wiki in wikia.
 
-You can test this script placing in line 32 the list of wiki urls you want to extract the edits per user from (variable `$urls_filename`).
+You can test this script placing the list of wiki urls you want to extract in a `.txt` file and assing its name to the `$urls_filename` variable.
 As an example you can use the `wikiaIndex-test.txt` file given in the repo.
+
+Currently, there are two scripts:
+
+* `get_edits_per_user.pl`: Download a .csv of the form: `url; wiki_name; total_edits; edits_per_user; bots` for every wiki listed in the urls input file.
+* `user_with_edits.pl`: Download both, the previous csv and a (bigger) xml file with much more info about every user of every wiki. The shape of that xml matches the `wikia_edits.xsd` schema.
 
 Written in `Perl5`.
 

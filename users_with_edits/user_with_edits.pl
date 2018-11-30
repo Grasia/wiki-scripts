@@ -32,7 +32,12 @@ my $listUsers_post_endpoint = 'index.php?' . 'action=ajax&rs=ListusersAjax::axSh
 my $output_csv_filename = 'wikia_edits-test.csv';
 my $output_xml_filename = 'wikia_edits-test.xml';
 my $urls_filename = 'wikiaIndex-test.txt';
+
+#my $output_csv_filename = 'wikia_edits-partk.csv';
+#my $output_xml_filename = 'wikia_edits-partk.xml';
 #my $urls_filename = '20180917-curatedIndex-partk.txt';
+
+
 my $csv_columns = 'url; wiki_name; total_edits; edits_per_user; bots';
 
 # output messages

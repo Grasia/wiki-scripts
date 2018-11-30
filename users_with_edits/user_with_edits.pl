@@ -33,9 +33,9 @@ my $output_csv_filename = 'wikia_edits-test.csv';
 my $output_xml_filename = 'wikia_edits-test.xml';
 my $urls_filename = 'wikiaIndex-test.txt';
 
-#my $output_csv_filename = 'wikia_edits-partk.csv';
-#my $output_xml_filename = 'wikia_edits-partk.xml';
-#my $urls_filename = '20180917-curatedIndex-partk.txt';
+#my $output_csv_filename = 'wikia_edits-part4.csv';
+#my $output_xml_filename = 'wikia_edits-part4.xml';
+#my $urls_filename = '20180917-curatedIndex-part4.txt';
 
 
 my $csv_columns = 'url; wiki_name; total_edits; edits_per_user; bots';
@@ -228,8 +228,6 @@ sub print_all_users {
         # Get userdata for all these users and print it in the output xml file.
         get_user_data_and_print(@usernames);
 
-    #~ exit;
-
     return 0;
 
     #~ Recursive looping
@@ -364,6 +362,8 @@ sub print_wiki {
     print $output_xml_fh " >\n";
     print $output_xml_fh "\t\t<total_edits>$wiki->{'edits'}</total_edits>\n" if (defined $wiki->{'edits'});
     print $output_xml_fh "\t\t<total_users>$wiki->{'users'}</total_users>\n" if (defined $wiki->{'users'});
+    print $output_xml_fh "\t\t<total_pages>$wiki->{'pages'}</total_pages>\n" if (defined $wiki->{'pages'});
+    print $output_xml_fh "\t\t<total_articles>$wiki->{'articles'}</total_articles>\n" if (defined $wiki->{'articles'});
 
     #~ XMLout ($wiki, OutputFile => $output_xml_fh, KeyAttr => {"wiki"}, KeepRoot => 1);
 }
@@ -430,9 +430,11 @@ foreach (@wikia_urls) {
         print_wiki(1);
         next;
     }
-    #~ print Dumper($json_res);
+    print Dumper($json_res);
     $wiki->{'edits'} = $json_res->{'query'}->{'statistics'}->{'edits'};
     $wiki->{'name'} = $json_res->{'query'}->{'general'}->{'sitename'};
+    $wiki->{'pages'} = $json_res->{'query'}->{'statistics'}->{'pages'};
+    $wiki->{'articles'} = $json_res->{'query'}->{'statistics'}->{'articles'};
     print $output_csv_fh ("\"$wiki->{'name'}\"; $wiki->{'edits'}; ");
 
     # get editions per user

@@ -68,6 +68,8 @@
     <xs:sequence>
       <xs:element name="total_edits" type="xs:nonNegativeInteger" minOccurs="0" />
       <xs:element name="total_users" type="xs:nonNegativeInteger" minOccurs="0" />
+      <xs:element name="total_pages" type="xs:nonNegativeInteger" minOccurs="0" />
+      <xs:element name="total_articles" type="xs:nonNegativeInteger" minOccurs="0" />
       <xs:element name="edits_per_user" type="userlist" minOccurs="0" />
       <xs:element name="edits_per_bot" type="userlist" minOccurs="0" />
     </xs:sequence>

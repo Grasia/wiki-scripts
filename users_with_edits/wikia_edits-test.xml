@@ -3,6 +3,8 @@
 	<wiki url="http://200movies.wikia.com/" error="false" wiki_name="200Movies Wiki" >
 		<total_edits>869</total_edits>
 		<total_users>6</total_users>
+		<total_pages>704</total_pages>
+		<total_articles>88</total_articles>
 		<edits_per_user>
 			<user userid="26870381" name="LukeMan927" editcount="685" registration="2015-08-08T23:50:28Z" gender="unknown"><groups><g>bureaucrat</g><g>sysop</g><g>*</g><g>user</g><g>autoconfirmed</g></groups></user>
 			<user userid="26424341" name="Ninosechi" editcount="68" registration="2015-05-22T18:46:06Z" gender="unknown"><groups><g>bureaucrat</g><g>sysop</g><g>*</g><g>user</g><g>autoconfirmed</g></groups></user>
@@ -19,6 +21,8 @@
 	<wiki url="http://cocktails.wikia.com/" error="false" wiki_name="Cocktails Wiki" >
 		<total_edits>24004</total_edits>
 		<total_users>270</total_users>
+		<total_pages>4977</total_pages>
+		<total_articles>1532</total_articles>
 		<edits_per_user>
 			<user userid="5659711" name="Acardwell415" editcount="44" registration="2012-10-24T23:11:26Z" gender="female"><groups><g>restricted-login</g><g>*</g><g>user</g><g>autoconfirmed</g></groups></user>
 			<user userid="2" name="Angela" editcount="1146" registration="" gender="female"><groups><g>*</g><g>user</g><g>autoconfirmed</g></groups></user>
@@ -297,6 +301,8 @@
 	<wiki url="http://international-music-festival.wikia.com/" error="false" wiki_name="International Music Festival Wiki" >
 		<total_edits>24240</total_edits>
 		<total_users>100</total_users>
+		<total_pages>4082</total_pages>
+		<total_articles>1268</total_articles>
 		<edits_per_user>
 			<user userid="32389533" name="4rkkaaF" editcount="16" registration="2017-06-25T16:38:04Z" gender="unknown"><groups><g>*</g><g>user</g><g>autoconfirmed</g></groups></user>
 			<user userid="25080803" name="Adamantios K." editcount="14" registration="2014-06-19T08:08:51Z" gender="male"><groups><g>*</g><g>user</g><g>autoconfirmed</g></groups></user>

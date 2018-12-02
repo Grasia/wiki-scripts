@@ -14,6 +14,17 @@ Written in `Perl5`.
 
 ## Dependencies
 * Bundle::LWP. In debian and derivatives it's included in the `libwww-perl` package. Alternatively, It can be installed using CPAN: `perl -MCPAN -e 'install Bundle::LWP'`
-* Perl JSON lib. In debian and derivatives it's included in the `libjson-perl` package, other distros can find it in `perl-JSON`. Alternatively, It can be installed using CPAN: `perl -MCPAN -e 'install JSON'`
-* Perl HTML::Strip lib. In debian and derivatives it's included in the `libhtml-strip-perl` package. Alternatively, install it using CPAN: `perl -cpan HTML::Strip`
-* Perl TryCatch module. In debian and Derivatives it's included in the `libtrycatch-perl` package. Alternatively, It can be installed using CPAN: `perl -MCPAN -e 'install TryCatch'`
+* Perl JSON lib. In debian and derivatives it's included in the `libjson-perl` package, other distros can find it in `perl-JSON`. Alternatively, It can be installed using CPAN:
+
+  ```
+  perl -MCPAN -e shell
+  install JSON
+  ```
+
+* Perl HTML::Strip lib. In debian and derivatives it's included in the `libhtml-strip-perl` package. Alternatively, install it using CPAN: `perl -MCPAN -e HTML::Strip`
+* Perl TryCatch module. In debian and Derivatives it's included in the `libtrycatch-perl` package. Alternatively, It can be installed using CPAN:
+
+  ```
+  perl -MCPAN -e shell
+  install TryCatch
+  ```

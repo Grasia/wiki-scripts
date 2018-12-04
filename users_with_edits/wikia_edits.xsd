@@ -15,6 +15,12 @@
 
 <!-- Simple Type definitions -->
 
+<!--
+
+Supposedly, the mediawiki api says that the only values allowed for gendertype are:
+ 'male', 'female' or 'unknown'
+But, in reality, Wikia allows free text here. So people don't neccesarily write those values...
+
   <xs:simpleType name="gendertype">
     <xs:restriction base="xs:string">
       <xs:pattern value="[Mm][Aa][Ll][Ee]"/>
@@ -22,7 +28,17 @@
       <xs:pattern value="unknown"/>
     </xs:restriction>
   </xs:simpleType>
+-->
 
+<xs:simpleType name="gendertype">
+  <xs:restriction base="xs:string" />
+</xs:simpleType>
+
+<xs:simpleType name="invalidtype">
+  <xs:restriction base="xs:string">
+    <xs:enumeration value=""></xs:enumeration>
+  </xs:restriction>
+</xs:simpleType>
 
   <xs:simpleType name="dateOrEmptytype">
     <xs:union>
@@ -42,24 +58,25 @@
 
   <xs:complexType name="usergroupstype">
     <xs:sequence>
-      <xs:element name="g" type="xs:string" maxOccurs="unbounded" />
+      <xs:element name="g" type="xs:string" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
   </xs:complexType>
 
   <xs:complexType name="usertype">
     <xs:sequence>
-      <xs:element name="groups" type="usergroupstype"/>
+      <xs:element name="groups" minOccurs="0" type="usergroupstype"/>
     </xs:sequence>
     <xs:attribute name="userid" type="xs:positiveInteger"/>
     <xs:attribute name="name" type="xs:string"/>
     <xs:attribute name="editcount" type="xs:nonNegativeInteger"/>
     <xs:attribute name="registration" type="dateOrEmptytype"/>
     <xs:attribute name="gender" type="gendertype"/>
+    <xs:attribute name="invalid" type="invalidtype"/>
   </xs:complexType>
 
   <xs:complexType name="userlist">
     <xs:sequence>
-      <xs:element name="user" type="usertype" maxOccurs="unbounded" />
+      <xs:element name="user" type="usertype" minOccurs="0" maxOccurs="unbounded" />
     </xs:sequence>
   </xs:complexType>
 
@@ -68,7 +85,15 @@
     <xs:sequence>
       <xs:element name="total_edits" type="xs:nonNegativeInteger" minOccurs="0" />
       <xs:element name="total_users" type="xs:nonNegativeInteger" minOccurs="0" />
+<!--
+    There's one edge case (error) where a wiki has a total_pages of -1.
+    In particular, this wiki: http://es.sasa121.wikia.com/wiki/Especial:Estadísticas
+    has -1 in its total pages count. I have opened a bug to Wikia about this already.
+    I have set this element to integer instead of nonNegative to sort out this case.
+    Previous element definition was:
       <xs:element name="total_pages" type="xs:nonNegativeInteger" minOccurs="0" />
+-->
+      <xs:element name="total_pages" type="xs:integer" minOccurs="0" />
       <xs:element name="total_articles" type="xs:nonNegativeInteger" minOccurs="0" />
       <xs:element name="edits_per_user" type="userlist" minOccurs="0" />
       <xs:element name="edits_per_bot" type="userlist" minOccurs="0" />

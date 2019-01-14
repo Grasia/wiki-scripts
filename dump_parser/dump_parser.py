@@ -3,10 +3,10 @@
 """
    dump_parser.py
 
-   Script to convert xml to a csv files with readable useful data
+   Script to convert a xml mediawiki history dump to a csv file with readable useful data
 for pandas processing.
 
-   Copyright 2017-2018 Abel 'Akronix' Serrano Juste <akronix5@gmail.com>
+   Copyright 2017-2019 Abel 'Akronix' Serrano Juste <akronix5@gmail.com>
 """
 
 import xml.parsers.expat
@@ -15,6 +15,8 @@ import sys
 Debug = False
 
 __version__ = '1.0.0'
+
+csv_separator = ","
 
 def xml_to_csv(filename):
 
@@ -108,14 +110,14 @@ def xml_to_csv(filename):
 
       # Do not print (skip) revisions that has any of the fields not available
       if not has_empty_field(revision_row):
-        output_csv.write(";".join(revision_row) + '\n')
+        output_csv.write(csv_separator.join(revision_row) + '\n')
       else:
         print("The following line has imcomplete info and therefore it's been removed from the dataset:")
         print(revision_row)
 
       # Debug lines to standard output
       if Debug:
-        print(";".join(revision_row))
+        print(csv_separator.join(revision_row))
 
       # Clearing data that has to be recalculated for every row:
       revision_id = timestamp = contributor_id = contributor_name = bytes_var = ''
@@ -137,7 +139,7 @@ def xml_to_csv(filename):
 
   # writing header for output csv file
   output_csv = open(filename[0:-3]+"csv",'w', encoding='utf8')
-  output_csv.write(";".join(["page_id","page_title","page_ns","revision_id","timestamp","contributor_id","contributor_name","bytes"]))
+  output_csv.write(csv_separator.join(["page_id","page_title","page_ns","revision_id","timestamp","contributor_id","contributor_name","bytes"]))
   output_csv.write("\n")
 
   # Parsing xml and writting proccesed data to output csv
@@ -152,8 +154,8 @@ def xml_to_csv(filename):
 
 
 if __name__ == "__main__":
-  print (sys.argv)
   if(len(sys.argv)) >= 2:
+    print ('Dump files to process: {}'.format(sys.argv[1:]))
     for xmlfile in sys.argv[1:]:
       print("Starting to parse file " + xmlfile)
       if xml_to_csv(xmlfile):

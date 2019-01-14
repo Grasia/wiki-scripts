@@ -33,12 +33,14 @@ df['timestamp'] = pd.to_datetime(df['timestamp'],format='%Y-%m-%dT%H:%M:%SZ')
 ```
 
 ## Dependencies
+
 * python 3
 
 *Yes, nothing more.*
 
 ## How to get a wiki history dump
 There are several ways to get the wiki dump:
+
 - If you have access to the server, follow the [instructions in the mediawiki docs](https://www.mediawiki.org/wiki/Manual:Backing_up_a_wiki#Backup_the_content_of_the_wiki_(XML_dump)).
 - For **Wikia wikis** and [many other domains](https://github.com/Grasia/wiki-scripts/tree/master/wiki_dump_downloader#domains-tested), you can use our in-house developed script made to accomplish this task. It is straightforward to use and very fast on it.
 - **Wikimedia project wikis**: For wikis belonging to the Wikimedia project, you already have a regular updated repo with all the dumps here: http://dumps.wikimedia.org. [Select your target wiki from the list](https://dumps.wikimedia.org/backup-index-bydb.html) and download the complete edit history dump and uncompress it.

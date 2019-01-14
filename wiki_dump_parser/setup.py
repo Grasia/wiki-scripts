@@ -1,7 +1,7 @@
 from setuptools import setup
 from os import path
 
-__version__ = '1.0.0'
+from wiki_dump_parser import __version__
 
 
 # read the contents of the README file

@@ -12,6 +12,8 @@ for pandas processing.
 import xml.parsers.expat
 import sys
 
+__version__ = '2.0.0'
+
 Debug = False
 
 csv_separator = ","

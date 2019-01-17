@@ -14,7 +14,7 @@ for wiki in $wikis; do
 		echo "Joining all data parts into one xml file for $wiki..."
 		sh join_xml_parts.sh $wiki
 		rm -r data/processed/$wiki/parts
-		python3 ../dump_parser/dump_parser.py data/processed/$wiki/full/$wiki.xml
+		python3 ../wiki_dump_parser/wiki_dump_parser.py data/processed/$wiki/full/$wiki.xml
 		rm data/processed/$wiki/full/$wiki.xml
 	else
 		echo "Error when downloading dump for $wiki. Skipping..."

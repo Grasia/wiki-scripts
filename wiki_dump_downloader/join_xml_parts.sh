@@ -10,9 +10,10 @@ prefix=$1
 # Setting a directory to place output based on prefix (script argument)
 if [ -z $prefix ]; then
 	xml_list=$(ls -1b ${data_dir}/*.xml)
-	oprefix='output'
+	prefix='output'
 	output_xml="$processed_dir/$prefix/full/output.xml"
 else
+	prefix=$(echo $prefix | tr "/" "_")
 	xml_list=$(ls -1b ${data_dir}/${prefix}*.xml)
 	output_xml="$processed_dir/$prefix/full/$prefix.xml"
 fi

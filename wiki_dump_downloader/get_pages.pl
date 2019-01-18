@@ -99,6 +99,22 @@ sub endpoints_probing {
         return ($api_url, $export_url)
 }
 
+# Get next value for the $apfrom parameter,
+#  from the xml response of a query that asks for the number of pages
+#  of a certain namespace
+# @input: decoded content of the api query
+# @output: ($apfrom value) or undef if $apfrom value was not found.
+sub get_next_apfrom {
+        my ($xml_content, $apfrom) = @_;
+        ($apfrom) = $xml_content =~ m#<allpages apfrom="(.*?)" />#; # Wikia and many other mediawiki wikis
+        return $apfrom if ($apfrom);
+
+        ($apfrom) = $xml_content =~ m#<continue apcontinue="(.*?)" continue=".*" />#; # gamepedia wikis
+        return $apfrom if ($apfrom);
+
+        return undef;
+}
+
 
 #####  Begin logic #####
 
@@ -153,12 +169,7 @@ foreach my $ns (@namespaces) {
                         push @pages, $res->decoded_content =~ m#<p pageid="\d+" ns="\d+" title="(.*?)" />#g;
 
                         # look for next apfrom param (in case there is).
-                        ($apfrom) = $res->decoded_content =~ m#<allpages apfrom="(.*?)" />#; # Wikia and many other mediawiki wikis
-                        if (not defined $apfrom) {
-                                ($apfrom) = $res->decoded_content =~ m#<continue apcontinue="(.*?)" continue=".*" />#; # gamepedia wikis
-                        } else {
-                                undef $apfrom;
-                        }
+                        $apfrom = get_next_apfrom($res->decoded_content);
 
                 } else {
                         die $res->status_line." on $url";

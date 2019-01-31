@@ -10,6 +10,7 @@ is removed. Additionally, the number of nonarticles is computed using
 stats.articles (the number of content pages) and stats.pages (the total number of pages contained in the wiki)
 
 Finally, the stats are stored in a CSV file with the following columns:
+-  'date_last_action'
 - 'creation_date'
 - 'domain'
 - 'founding_user_id'
@@ -33,7 +34,6 @@ Finally, the stats are stored in a CSV file with the following columns:
 - 'url'
 - 'wam_score'
 - 'stats.nonarticles'
--  'date of last edit'
 -  'total number of views'
 """
 
@@ -41,10 +41,12 @@ import requests
 import json
 import time
 from pandas.io.json import json_normalize
+from datetime import datetime
+
 
 wikia_api_endpoint = 'http://www.wikia.com/api/v1/Wikis/ByString?expand=1&limit=25&batch=1&includeDomain=true&string='
 
-mw_api_endpoint = 'api.php'
+mw_api_endpoint = 'api.php?'
 
 def get_wikia_stats(link):
     """Request the stats of a wiki characterized by its url
@@ -68,6 +70,26 @@ def get_wikia_stats(link):
         return None
 
 
+def get_date_for_last_edit(link):
+    req = requests.get(link + mw_api_endpoint + 'action=query&list=recentchanges&format=json')
+    statusCode = req.status_code
+    if statusCode == 200:
+        raw = json.loads(req.text)
+        if (not 'recentchanges' in raw['query']):
+            return None
+        else:
+            recent_changes = raw['query']['recentchanges']
+        if (len(recent_changes)==0):
+            return 'NA'
+        else:
+            date_last_revision = recent_changes[1]['timestamp']
+            return date_last_revision
+    else:
+        print (statusCode)
+        return None
+
+
+
 wikia = []
 i=0
 output_filename = "wikia_stats"
@@ -80,19 +102,29 @@ with open('../data/20190125-curatedIndex.txt') as f:
 for link in links:
     data = get_wikia_stats(link)
     if (data is None):
-        print ("Error processing link: {} ({})".format(i,link))
+        print ("Error processing link to Wikia API: {} ({})".format(i,link))
         continue
+
+    last_date = get_date_for_last_edit(link)
+    if (last_date is None):
+        print ("Error processing link to mediawiki API: {} ({})".format(i,link))
+        continue
+
+    data['date_last_action'] = datetime.strptime(last_date, '%Y-%m-%dT%H:%M:%SZ')
+
 
     #~ print(data)
     wikia.append(data)
-    i+=1
+    i += 1
+    #~ if i > 3:
+        #~ break;
 
 
 # Load the stats using json_normalize in order to flatten the objects
 df = json_normalize(wikia)
 
 # Remove unnecessary columns
-df.drop(columns=['desc','flags', 'image', 'original_dimensions.height','original_dimensions.width', 'topUsers', 'wordmark'], inplace=True) #TOBECHANGED by the columns we actually want
+df.drop(columns=['desc','flags', 'image', 'topUsers', 'wordmark'], inplace=True) #TOBECHANGED by the columns we actually want
 
 # Compute nonarticles
 df['stats.nonarticles'] = df['stats.pages']-df['stats.articles']

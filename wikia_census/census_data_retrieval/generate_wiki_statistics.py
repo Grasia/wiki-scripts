@@ -33,6 +33,8 @@ Finally, the stats are stored in a CSV file with the following columns:
 - 'url'
 - 'wam_score'
 - 'stats.nonarticles'
+-  'date of last edit'
+-  'total number of views'
 """
 
 import requests
@@ -40,9 +42,11 @@ import json
 import time
 from pandas.io.json import json_normalize
 
-url = 'http://www.wikia.com/api/v1/Wikis/ByString?expand=1&limit=25&batch=1&includeDomain=true&string='
+wikia_api_endpoint = 'http://www.wikia.com/api/v1/Wikis/ByString?expand=1&limit=25&batch=1&includeDomain=true&string='
 
-def requestStats(link):
+mw_api_endpoint = 'api.php'
+
+def get_wikia_stats(link):
     """Request the stats of a wiki characterized by its url
 
     Keyword arguments:
@@ -51,7 +55,7 @@ def requestStats(link):
     Return:
     An object with the stats of the wiki or None
     """
-    req = requests.get(url+link)
+    req = requests.get(wikia_api_endpoint+link)
     statusCode = req.status_code
     if statusCode == 200:
         o = json.loads(req.text)
@@ -74,13 +78,14 @@ with open('../data/20190125-curatedIndex.txt') as f:
 
 # Repeat for every URL (it takes about 1500ms per query, so take it easy)
 for link in links:
-    data = requestStats(link)
+    data = get_wikia_stats(link)
     if (data is None):
         print ("Error processing link: {} ({})".format(i,link))
-    else:
-        #~ print(data)
-        wikia.append(data)
-        i+=1
+        continue
+
+    #~ print(data)
+    wikia.append(data)
+    i+=1
 
 
 # Load the stats using json_normalize in order to flatten the objects

@@ -10,7 +10,7 @@ is removed. Additionally, the number of nonarticles is computed using
 stats.articles (the number of content pages) and stats.pages (the total number of pages contained in the wiki)
 
 Finally, the stats are stored in a CSV file with the following columns:
--  'date_last_action'
+- 'date_last_action'
 - 'creation_date'
 - 'domain'
 - 'founding_user_id'
@@ -34,13 +34,14 @@ Finally, the stats are stored in a CSV file with the following columns:
 - 'url'
 - 'wam_score'
 - 'stats.nonarticles'
--  'total number of views'
+- 'page_views'
 """
 
 import requests
 import json
 import time
 from pandas.io.json import json_normalize
+import pandas as pd
 from datetime import datetime
 
 
@@ -82,7 +83,7 @@ def get_date_for_last_edit(link):
         if (len(recent_changes)==0):
             return 'NA'
         else:
-            date_last_revision = recent_changes[1]['timestamp']
+            date_last_revision = recent_changes[0]['timestamp']
             return date_last_revision
     else:
         print (statusCode)
@@ -143,7 +144,10 @@ for link in links:
         print ("Error processing link to mediawiki API for getting last date: {} ({})".format(i,link))
         continue
 
-    data['date_last_action'] = datetime.strptime(last_date, '%Y-%m-%dT%H:%M:%SZ')
+    if last_date == 'NA':
+        data['date_last_action'] = pd.NaT
+    else:
+        data['date_last_action'] = datetime.strptime(last_date, '%Y-%m-%dT%H:%M:%SZ')
 
     page_views = count_all_page_views(link)
     if (page_views is None):
@@ -157,7 +161,7 @@ for link in links:
     #~ print(data)
     wikia.append(data)
     i += 1
-    #~ if i > 3:
+    #~ if i > 20:
         #~ break;
 
 
@@ -165,7 +169,19 @@ for link in links:
 df = json_normalize(wikia)
 
 # Remove unnecessary columns
-df.drop(columns=['desc','flags', 'image', 'topUsers', 'wordmark', 'original_dimensions.height', 'original_dimensions.width'], inplace=True) #TOBECHANGED by the columns we actually want
+#~ df.drop(columns=['desc','flags', 'image', 'topUsers', 'wordmark'], inplace=True) #TOBECHANGED by the columns we actually want
+
+# Keep wanted columns (more reliable approach)
+columns =  ['id', 'url', 'title', 'topic', 'domain', 'founding_user_id',
+            'headline', 'hub', 'lang', 'language', 'name',
+            'stats.activeUsers', 'stats.admins',
+            'stats.articles', 'stats.discussions',
+            'stats.edits', 'stats.images',
+            'stats.pages', 'stats.users', 'stats.videos',
+            'wam_score', 'creation_date',
+            'date_last_action', 'page_views']
+
+df = df[columns]
 
 # Compute nonarticles
 df['stats.nonarticles'] = df['stats.pages']-df['stats.articles']

@@ -89,6 +89,39 @@ def get_date_for_last_edit(link):
         return None
 
 
+def count_all_page_views(link):
+    total_page_views = 0
+    url_req = link + mw_api_endpoint + 'action=query&generator=allpages&prop=info&inprop=views&gaplimit=500&format=json'
+
+    req = requests.get(url_req)
+
+    # initial vars for entering loop
+    statusCode = req.status_code
+    continue_query = True
+
+    while (statusCode == 200 and continue_query):
+        raw = json.loads(req.text)
+        pages = raw['query']['pages']
+        for page in pages.values():
+            total_page_views += page['views']
+
+        if 'query-continue' in raw:
+            continue_query = True
+            # next iteration vars:
+            #~ print(raw['query-continue'])
+            next_page = raw['query-continue']['allpages']['gapfrom']
+            req = requests.get(url_req + '&gapfrom=' + next_page)
+            raw = json.loads(req.text)
+            statusCode = req.status_code
+        else:
+            continue_query = False
+
+    if statusCode == 200:
+        return total_page_views
+    else:
+        print (statusCode)
+        return None
+
 
 wikia = []
 i=0
@@ -107,10 +140,18 @@ for link in links:
 
     last_date = get_date_for_last_edit(link)
     if (last_date is None):
-        print ("Error processing link to mediawiki API: {} ({})".format(i,link))
+        print ("Error processing link to mediawiki API for getting last date: {} ({})".format(i,link))
         continue
 
     data['date_last_action'] = datetime.strptime(last_date, '%Y-%m-%dT%H:%M:%SZ')
+
+    page_views = count_all_page_views(link)
+    if (page_views is None):
+        print ("Error processing link to mediawiki API for getting page views: {} ({})".format(i,link))
+        continue
+
+    #~ print(page_views)
+    data['page_views'] = page_views
 
 
     #~ print(data)
@@ -124,7 +165,7 @@ for link in links:
 df = json_normalize(wikia)
 
 # Remove unnecessary columns
-df.drop(columns=['desc','flags', 'image', 'topUsers', 'wordmark'], inplace=True) #TOBECHANGED by the columns we actually want
+df.drop(columns=['desc','flags', 'image', 'topUsers', 'wordmark', 'original_dimensions.height', 'original_dimensions.width'], inplace=True) #TOBECHANGED by the columns we actually want
 
 # Compute nonarticles
 df['stats.nonarticles'] = df['stats.pages']-df['stats.articles']

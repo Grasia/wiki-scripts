@@ -14,11 +14,9 @@ Finally, the stats are stored in a CSV file with the following columns:
 - 'creation_date'
 - 'domain'
 - 'founding_user_id'
-- 'headline'
 - 'hub'
 - 'id'
 - 'lang'
-- 'language'
 - 'name'
 - 'stats.activeUsers'
 - 'stats.admins'
@@ -171,13 +169,11 @@ df = json_normalize(wikia)
 # Remove unnecessary columns
 #~ df.drop(columns=['desc','flags', 'image', 'topUsers', 'wordmark'], inplace=True) #TOBECHANGED by the columns we actually want
 
-# Keep wanted columns (more reliable approach)
+# Instead above ^, keep wanted columns (more reliable approach)
 columns =  ['id', 'url', 'title', 'topic', 'domain', 'founding_user_id',
-            'headline', 'hub', 'lang', 'language', 'name',
-            'stats.activeUsers', 'stats.admins',
-            'stats.articles', 'stats.discussions',
-            'stats.edits', 'stats.images',
-            'stats.pages', 'stats.users', 'stats.videos',
+            'hub', 'lang', 'name',
+            'stats.activeUsers', 'stats.admins', 'stats.articles', 'stats.edits',
+            'stats.images', 'stats.pages', 'stats.videos',
             'wam_score', 'creation_date',
             'date_last_action', 'page_views']
 

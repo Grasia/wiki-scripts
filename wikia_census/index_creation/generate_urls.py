@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 import requests
 import time
 
-url = "http://www.wikia.com/Sitemap"
+url = "https://community.wikia.com/wiki/Sitemap"
 baseURL = "http://www.wikia.com"
 
 

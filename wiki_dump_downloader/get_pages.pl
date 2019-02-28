@@ -52,6 +52,7 @@ if ( not $wiki =~ /^https?/ ) {
         $wiki_url = 'http://' . $wiki;
 } else {
         $wiki_url = $wiki;
+        ($wiki) = ($wiki =~ /^https?:\/\/(.+)/); # remove the schema part from $wiki
 }
 
 my @possible_api_endpoints = ('/api.php', '/w/api.php');

@@ -20,9 +20,16 @@ for wiki in $wikis; do
 	# 4) print $wiki_fn value to be grabbed by $wiki_fn var in this shell script
 	wiki_fn=$(
 	perl -e 'my $wiki = $ARGV[0];
-	my ($wiki_fn) = ($wiki =~ /^https?:\/\/(.+)/) if $wiki =~ /^https?/;
+	my $wiki_fn;
+	if ($wiki =~ /^https?/) {
+		($wiki_fn) = ($wiki =~ /^https?:\/\/(.+)/);
+	} else {
+		$wiki_fn = $wiki;
+	}
 	$wiki_fn =~ s~[^\w\.\-]~_~g;
 	print($wiki_fn);' $wiki) # $wiki is the argument to the perl script
+	
+	echo "The output filename for this wiki will be: \"$wiki_fn\""
 
 	perl get_pages.pl $wiki
 	if [ $? -eq 0 ]; then

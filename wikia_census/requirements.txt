@@ -12,9 +12,9 @@ jsonschema==2.6.0
 jupyter-client==5.2.4
 jupyter-console==6.0.0
 jupyter-core==4.4.0
-lxml==4.2.5
+lxml==4.6.2
 nbformat==4.4.0
-notebook==5.7.4
+notebook==6.1.5
 numpy==1.16.0
 pandas==0.24.0
 plotly==3.3.0
@@ -27,4 +27,4 @@ retrying==1.3.3
 six==1.11.0
 traitlets==4.3.2
 tzlocal==1.5.1
-urllib3==1.24
+urllib3==1.24.2

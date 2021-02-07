@@ -12,7 +12,7 @@ for pandas processing.
 import xml.parsers.expat
 import sys
 
-__version__ = '2.0.1'
+__version__ = '2.0.2'
 
 Debug = False
 
@@ -112,7 +112,7 @@ def xml_to_csv(filename):
       if not has_empty_field(revision_row):
         output_csv.write(csv_separator.join(revision_row) + '\n')
       else:
-        print("The following line has imcomplete info and therefore it's been removed from the dataset:")
+        print("The following line has incomplete info and therefore it's been removed from the dataset:")
         print(revision_row)
 
       # Debug lines to standard output

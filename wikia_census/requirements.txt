@@ -14,7 +14,7 @@ jupyter-console==6.0.0
 jupyter-core==4.4.0
 lxml==4.6.2
 nbformat==4.4.0
-notebook==6.1.5
+notebook==6.4.1
 numpy==1.16.0
 pandas==0.24.0
 plotly==3.3.0

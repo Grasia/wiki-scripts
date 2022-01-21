@@ -5,7 +5,7 @@ chardet==3.0.4
 dateparser==0.7.0
 decorator==4.3.0
 idna==2.7
-ipython==7.2.0
+ipython==7.16.3
 ipython-genutils==0.2.0
 ipywidgets==7.4.2
 jsonschema==2.6.0

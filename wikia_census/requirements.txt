@@ -15,7 +15,7 @@ jupyter-core==4.4.0
 lxml==4.6.5
 nbformat==4.4.0
 notebook==6.1.5
-numpy==1.16.0
+numpy==1.22.0
 pandas==0.24.0
 plotly==3.3.0
 python-dateutil==2.7.3

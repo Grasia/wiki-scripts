@@ -1,0 +1,3 @@
+Since this repo it's actually a compilation of many scripts, every directory has its own LICENSE File indicating the specific LICENSE for the source code contained in that directory.
+All scripts have open-source LICENSE except for the `wikia_census` one, which has a closed copyright LICENSE.
+Don't hesitate to contact the repo maintainer in case you want to use the former code or for any question you have regarding the licensing of this repo.
